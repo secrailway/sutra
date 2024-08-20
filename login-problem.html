@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Problem</title>
+    <link rel="stylesheet" href="login-problem.css">
+</head>
+<body>
+    <div class="form-container">
+        <h1>Login Problem</h1>
+        <form id="loginProblemForm">
+            <input type="hidden" id="timestamp">
+            
+            <div class="form-group">
+                <label for="purpose">Purpose:</label>
+                <select id="purpose" name="purpose" required>
+                    <option value="Login Problem">Login Problem</option>
+                    <option value="Password Change Request">Password Change Request</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="crewId">CREW ID:</label>
+                <input type="text" id="crewId" name="crewId" placeholder="ex- BSP3637" required>
+            </div>
+            <div class="form-group">
+                <label for="crewName">CREW NAME AS ON CMS:</label>
+                <input type="text" id="crewName" name="crewName" required>
+            </div>
+            <div class="form-group">
+                <label for="mobileNumber">MOBILE NUMBER:</label>
+                <input type="tel" id="mobileNumber" name="mobileNumber" required>
+            </div>
+            <div class="form-group">
+                <label for="previousCrewId">PREVIOUS CREW ID (If Transferred from Another Lobby):</label>
+                <input type="text" id="previousCrewId" name="previousCrewId">
+            </div>
+            <div class="form-group">
+                <label for="reason">Reason:</label>
+                <textarea id="reason" name="reason" rows="4" cols="30" placeholder="Enter your reason here"></textarea>
+            </div>
+            <button type="submit">Submit</button>
+        </form>
+        <!-- Spinner Container -->
+        <div id="spinner-container" style="display:none;">
+             <img src="spinner.gif" alt="Loading..." id="spinner">
+        </div>
+
+        <div id="message"></div>
+    </div>
+
+    <script src="login-problem.js"></script>
+</body>
+</html>
