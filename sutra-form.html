@@ -18,7 +18,7 @@
         <!-- Welcome message -->
         <h3 id="welcome-message"></h3>
         
-        <form id="sutra-form" action="#" method="post">
+        <form id="sutra-form" action="#" method="post" autocomplete="off">
             <label for="lp-id">ENTER LP ID</label>
             <input type="text" id="lp-id" name="lp-id" required pattern=".{7,8}" title="LP ID must be like ex.BSP1234" oninput="this.value = this.value.toUpperCase().replace(/\s/g, '')">
             <div id="lp-name"></div>
