@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Long Hours Monitoring</title>
+    <link rel="stylesheet" href="styles1.css">
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+</head>
+<body>
+
+    <h1>Long Hours Monitoring</h1>
+
+    <!-- Google Sign-In Button -->
+    <button id="loginButton">Login with Google</button>
+
+    <form id="monitoringForm" style="display:none;">
+        <label for="lobby">Select LOBBY:</label>
+        <select id="lobby" name="lobby">
+            <option value="AKT">AKT</option>
+            <option value="BSP">BSP</option>
+            <option value="BJRI">BJRI</option>
+            <option value="BRJN">BRJN</option>
+            <option value="KHS">KHS</option>
+            <option value="KRBA">KRBA</option>
+            <option value="PND">PND</option>
+            <option value="RIG">RIG</option>
+            <option value="SDL">SDL</option>
+            <option value="SJQ">SJQ</option>
+            <option value="USL">USL</option>
+        </select>
+
+        <label for="fromDateTime">FROM Sign ON DATE:</label>
+        <input type="date" id="fromDate" name="fromDate">
+        
+
+        <label for="toDateTime">TO Sign ON DATE:</label>
+        <input type="date" id="toDate" name="toDate">
+        
+
+        <button type="button" id="generateReport">REPORT</button>
+    </form>
+
+    <!-- DateTime Picker Modal -->
+    <div id="dateTimeModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <label for="modalDateTime">Select Date and Time:</label>
+            <input type="date" id="modalDate">
+            <input type="time" id="modalTime">
+            <div>
+                <button type="button" id="modalClear">Clear</button>
+                <button type="button" id="modalApply">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sign Off DateTime Picker Modal -->
+    <div id="signOffModal" class="modal">
+        <div class="modal-content">
+            <span class="closeSignOff">&times;</span>
+            <label for="signOffDate">Select Sign Off Date:</label>
+            <input type="date" id="signOffDate">
+            <label for="signOffTime">Select Sign Off Time:</label>
+            <input type="time" id="signOffTime">
+
+            <!-- New Field for Sign Off Station -->
+            <label for="signOffStation">Sign Off Station:</label>
+            <input type="text" id="signOffStation" placeholder="STATION CODE" required oninput="this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4)">
+
+            <div>
+                <button type="button" id="signOffClear">Clear</button>
+                <button type="button" id="signOffApply">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportContainer">
+        <!-- Report will be generated here -->
+    </div>
+
+    <script src="test.js"></script>
+
+</body>
+</html>

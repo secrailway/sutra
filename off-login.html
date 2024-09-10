@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link rel="stylesheet" href="off-login.css">
+</head>
+<body>
+    <div class="login-container">
+        <h2>CCC Login</h2>
+        <form id="loginForm">
+            <label for="loginId">Login ID:</label>
+            <select id="loginId" name="loginId">
+                <option value="AKT">AKT</option>
+                <option value="BJRI">BJRI</option>
+                <option value="BRJN">BRJN</option>
+                <option value="BSP">BSP</option>
+                <option value="KHS">KHS</option>
+                <option value="KRBA">KRBA</option>
+                <option value="PND">PND</option>
+                <option value="RIG">RIG</option>
+                <option value="SDL">SDL</option>
+                <option value="SJQ">SJQ</option>
+                <option value="USL">USL</option>
+            </select>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" placeholder="Enter Password" required>
+
+            <button type="submit">Login</button>
+            <p id="errorMessage" class="error-message"></p>
+        </form>
+    </div>
+
+    <script src="off-login.js"></script>
+</body>
+</html>
