@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relief Detail</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="relief-detail.css">
+</head>
+<body>
+
+    <div class="form-container">
+        <h2>Relief Detail</h2>
+        <form id="relief-form" action="#" method="post" autocomplete="off">
+            <label for="lp-id">LP ID</label>
+            <input type="text" id="lp-id" name="lp-id" placeholder="ex. BSP3637" required pattern=".{7,8}" title="LP ID must be like ex.BSP1234" oninput="this.value = this.value.toUpperCase().replace(/\s/g, '')">
+            <div id="lp-name"></div> <!-- Placeholder for LP Name -->
+            <input type="hidden" id="lp-name-hidden" name="lp-name-hidden">
+
+            <label for="alp-id">ALP ID</label>
+            <input type="text" id="alp-id" name="alp-id" placeholder="ex. BSP3637" required pattern=".{7,8}" title="ALP ID must be like ex.BSP1234" oninput="this.value = this.value.toUpperCase().replace(/\s/g, '')">
+            <div id="alp-name"></div> <!-- Placeholder for ALP Name -->
+            <input type="hidden" id="alp-name-hidden" name="alp-name-hidden">
+
+            <label for="relief-date">Relief Date</label>
+            <input type="date" id="relief-date" name="relief-date" required>
+
+            <label for="relief-time">Relief Time</label>
+            <input type="text" id="relief-time" name="relief-time" required>
+
+            <label for="relief-station">Relief Station</label>
+            <input type="text" id="relief-station" name="relief-station" placeholder="STATION CODE" required oninput="this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4)">
+
+            <label for="train-no">Relieved from Train No.</label>
+            <input type="text" id="train-no" name="train-no" required>
+
+            <label for="loco-no">LOCO No.</label>
+            <input type="text" id="loco-no" name="loco-no" required>
+
+            <label for="sign-off-stn">Nearest Sign Off Stn</label>
+            <select id="sign-off-stn" name="sign-off-stn" required>
+                <option value="" disabled selected>SELECT</option>
+                <option value="AKT">AKT</option>
+                <option value="BJRI">BJRI</option>
+                <option value="BRJN">BRJN</option>
+                <option value="BSP">BSP</option>
+                <option value="KHS">KHS</option>
+                <option value="KRBA">KRBA</option>
+                <option value="KZJ">KZJ</option>
+                <option value="PND">PND</option>
+                <option value="RIG">RIG</option>
+                <option value="SDL">SDL</option>
+                <option value="SJQ">SJQ</option>
+                <option value="USL">USL</option>
+                <option value="NKJ">NKJ</option>
+                <option value="JSG">JSG</option>
+                <option value="ROU">ROU</option>
+                <option value="SBP">SBP</option>
+            </select>
+
+            <input type="hidden" id="timestamp" name="timestamp"> <!-- Hidden Timestamp Field -->
+
+            <button type="submit">Submit</button>
+        </form>
+        <!-- Add this spinner div inside the form-container or body -->
+        <div id="spinner" style="display: none;">
+            <img src="spinner.gif" alt="Loading...">
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="relief-detail.js"></script>
+
+</body>
+</html>
