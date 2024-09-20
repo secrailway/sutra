@@ -12,6 +12,7 @@
         <form id="loginForm">
             <label for="loginId">Login ID:</label>
             <select id="loginId" name="loginId">
+                <option value="" disabled selected>SELECT</option>
                 <option value="AKT">AKT</option>
                 <option value="BJRI">BJRI</option>
                 <option value="BRJN">BRJN</option>
@@ -23,12 +24,13 @@
                 <option value="SDL">SDL</option>
                 <option value="SJQ">SJQ</option>
                 <option value="USL">USL</option>
+                <option value="Admin">Admin</option>
             </select>
 
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" placeholder="Enter Password" required>
 
-            <button type="submit">Login</button>
+            <button type="submit">LOGIN</button>
             <p id="errorMessage" class="error-message"></p>
         </form>
     </div>

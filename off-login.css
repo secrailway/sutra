@@ -1,27 +1,59 @@
 /* General page styling */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
+    background-color: #90b7db;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     margin: 0;
+    z-index: 1;
 }
 
 /* Container for the login form */
 .login-container {
-    background-color: white;
     padding: 30px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     width: 300px;
     text-align: center;
+    background: rgba(173, 216, 230, 0.603);
+    position: relative;
+    overflow: hidden;
+    z-index: 10;
 }
+
+.login-container::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, #3498db 10%, transparent 20%),
+      radial-gradient(circle, transparent 10%, #3498db 20%);
+    background-size: 30px 30px; /* Adjust the size of the pattern */
+    animation: moveBackground 8s linear infinite; /* Adjust the animation duration and timing function */
+    z-index: -1;
+  }
+
+
+  @keyframes moveBackground {
+    0% {
+      transform: translate(0, 0);
+    }
+    100% {
+      transform: translate(20%, 20%);
+    }
+  }
+
+
+
 
 /* Form element styling */
 .login-container h2 {
     margin-bottom: 20px;
+    z-index: 20;
 }
 
 .login-container label {
@@ -29,6 +61,7 @@ body {
     text-align: left;
     margin-bottom: 5px;
     font-weight: bold;
+    z-index: 20;
 }
 
 .login-container select,
@@ -38,23 +71,57 @@ body {
     margin-bottom: 15px;
     border-radius: 5px;
     border: 1px solid #ccc;
+    z-index: 20;
 }
 
-.login-container button {
-    width: 100%;
-    padding: 10px;
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.login-container button:hover {
-    background-color: #0056b3;
-}
 
 .error-message {
     color: red;
     font-size: 14px;
+    z-index: 20;
 }
+
+/* From Uiverse.io by gharsh11032000 */ 
+.login-container button {
+    cursor: pointer;
+    position: relative;
+    padding: 10px 24px;
+    font-size: 18px;
+    color: rgb(25, 89, 185);
+    border: 2px solid rgb(25, 89, 185);
+    border-radius: 34px;
+    background-color: transparent;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+    overflow: hidden;
+    z-index: 20;
+  }
+  
+  .login-container button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 50px;
+    height: 50px;
+    border-radius: inherit;
+    scale: 0;
+    z-index: -1;
+    background-color: rgb(91, 129, 225);
+    transition: all 0.6s cubic-bezier(0.23, 1, 0.320, 1);
+  }
+  
+  .login-container button:hover::before {
+    scale: 3;
+  }
+  
+  .login-container button:hover {
+    color: #ffffff;
+    scale: 1.1;
+    box-shadow: 0 0px 20px rgba(0, 0, 0, 0.4);
+  }
+  
+  .login-container button:active {
+    scale: 1;
+  }
+  
