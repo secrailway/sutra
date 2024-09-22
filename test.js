@@ -158,7 +158,7 @@ function displayReport(rows, lobby, fromDate, toDate) {
     if (filteredRows.length > 0) {
         const table = document.createElement("table");
         const headerRow = table.insertRow();
-        const headers = ["LP ID", "LP Name", "LP Mobile", "Sign On Time", "Direction", "Train No.", "Loco No.", "Sign Off"];
+        const headers = ["LP ID", "LP Name", "LP Mobile", "ALP Name", "Sign On Time", "Train No.", "Loco No.", "Last Passed Stn", "Sign Off"];
         headers.forEach(headerText => {
             const headerCell = document.createElement("th");
             headerCell.textContent = headerText;
@@ -173,10 +173,11 @@ function displayReport(rows, lobby, fromDate, toDate) {
                 row[0], // LP ID
                 row[1], // LP Name
                 row[2], // LP Mobile
+                row[4], // ALP Name
                 row[7],
-                row[9], // Direction
-                row[10], // Train No.
-                row[11], // Loco No.
+                row[9], // Train No.
+                row[10], // Loco No.
+                row[11], 
             ];
 
             cells.forEach(cellText => {
