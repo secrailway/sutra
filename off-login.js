@@ -10,7 +10,8 @@ const passwords = {
     "RIG": "2213",
     "SDL": "2520",
     "SJQ": "1680",
-    "USL": "2331"
+    "USL": "2331",
+    "Admin": "1234"
 };
 
 // Function to handle login form submission
