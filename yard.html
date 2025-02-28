@@ -32,7 +32,13 @@
 
     <script>
         function openPDF(pdfName) {
-            window.open(pdfName, '_blank');
+            // Use Google PDF Viewer to force viewing instead of downloading
+            const pdfUrl = encodeURIComponent(pdfName);
+            const viewerUrl = `https://docs.google.com/viewer?url=${pdfUrl}&embedded=true`;
+            window.open(viewerUrl, '_blank');
+
+            // Alternative method (uncomment if you prefer this):
+            // window.open(pdfName + '#view=FitH', '_blank');
         }
 
         function toggleBilaspurTabs() {
