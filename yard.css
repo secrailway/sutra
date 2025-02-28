@@ -7,7 +7,10 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #f3f4f6, #e3f2fd);
+    background-image: url('4.jpg'); /* Add the background image */
+    background-size: cover; /* Ensures the image covers the entire background */
+    background-position: center; /* Centers the image */
+    background-repeat: no-repeat; /* Prevents the image from repeating */
     display: flex;
     justify-content: center;
     align-items: center;
