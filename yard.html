@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Division Tabs</title>
+    <link rel="stylesheet" href="yard.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Division Tabs</h1>
+        <div class="tabs"> 
+            <button class="tab-button" onclick="toggleBilaspurTabs()">BILASPUR DIVISION</button>
+            <button class="tab-button" onclick="openPDF('RAIPUR DIVISION.pdf')">RAIPUR DIVISION</button>
+            <button class="tab-button" onclick="openPDF('SAMBALPUR DIVISION.pdf')">SAMBALPUR DIVISION</button>
+        </div>
+
+        <div id="bilaspur-tabs" class="sub-tabs hidden">
+            <button class="sub-tab" onclick="openPDF('BSP-CPH.pdf')">BSP-CPH</button>
+            <button class="sub-tab" onclick="openPDF('CPH-DPK.pdf')">CPH-DPK</button>
+            <button class="sub-tab" onclick="openPDF('CPH-RIG.pdf')">CPH-RIG</button>
+            <button class="sub-tab" onclick="openPDF('RIG-IB.pdf')">RIG-IB</button>
+            <button class="sub-tab" onclick="openPDF('KHS-KURUMKELA.pdf')">KHS-KURUMKELA</button>
+            <button class="sub-tab" onclick="openPDF('USL-PND.pdf')">USL-PND</button>
+            <button class="sub-tab" onclick="openPDF('PND-SDL.pdf')">PND-SDL</button>
+            <button class="sub-tab" onclick="openPDF('SDL-JLW.pdf')">SDL-JLW</button>
+            <button class="sub-tab" onclick="openPDF('APR-BJRI.pdf')">APR-BJRI</button>
+            <button class="sub-tab" onclick="openPDF('BJRI-SJQ.pdf')">BJRI-SJQ</button>
+            <button class="sub-tab" onclick="openPDF('SJQ-ABKP.pdf')">SJQ-ABKP</button>
+        </div>
+    </div>
+
+    <script>
+        function openPDF(pdfName) {
+            window.open(pdfName, '_blank');
+        }
+
+        function toggleBilaspurTabs() {
+            const tabs = document.getElementById('bilaspur-tabs');
+            tabs.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
