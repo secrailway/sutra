@@ -28,25 +28,12 @@
             <button class="sub-tab" onclick="openPDF('BJRI-SJQ.pdf')">BJRI-SJQ</button>
             <button class="sub-tab" onclick="openPDF('SJQ-ABKP.pdf')">SJQ-ABKP</button>
         </div>
-
-        <!-- Add a container for embedding the PDF -->
-        <div id="pdf-viewer" style="display: none; width: 100%; height: 500px;"></div>
     </div>
 
     <script>
         function openPDF(pdfName) {
-            // Detect if the user is on a mobile device
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-            if (isMobile) {
-                // For mobile: Embed the PDF in an iframe to force viewing
-                const viewer = document.getElementById('pdf-viewer');
-                viewer.style.display = 'block'; // Show the viewer
-                viewer.innerHTML = `<iframe src="${pdfName}" width="100%" height="100%" style="border: none;"></iframe>`;
-            } else {
-                // For PC: Open in a new tab
-                window.open(pdfName + '#toolbar=1&navpanes=0&scrollbar=1', '_blank');
-            }
+            // Open PDF in a new tab with a viewer-friendly parameter
+            window.open(pdfName + '#toolbar=1&navpanes=0&scrollbar=1', '_blank');
         }
 
         function toggleBilaspurTabs() {
