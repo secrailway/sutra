@@ -1,17 +1,17 @@
 // Object to store unique passwords for each login ID
 const passwords = {
-    "AKT": "1575",
-    "BJRI": "1593",
-    "BRJN": "5040",
-    "BSP": "1317",
-    "KHS": "1944",
-    "KRBA": "2715",
-    "PND": "1428",
-    "RIG": "2213",
-    "SDL": "2520",
-    "SJQ": "1680",
-    "USL": "2331",
-    "Admin": "1234"
+    "AKT": "15750",
+    "BJRI": "15930",
+    "BRJN": "50400",
+    "BSP": "13170",
+    "KHS": "19440",
+    "KRBA": "27150",
+    "PND": "14280",
+    "RIG": "22130",
+    "SDL": "25200",
+    "SJQ": "16800",
+    "USL": "23310",
+    "Admin": "12340"
 };
 
 // Function to handle login form submission
