@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Google Sheet Report and Update</title>
+    <script src="https://apis.google.com/js/api.js?v=2025052205"></script>
+    <script src="https://accounts.google.com/gsi/client?v=2025052205"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        // Token validation
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        const urlToken = getQueryParam('token');
+        const storedToken = localStorage.getItem('tlcToken');
+
+        if (!urlToken || !storedToken || urlToken !== storedToken) {
+            alert('Unauthorized access. Please login first.');
+            localStorage.removeItem('tlcToken');
+            window.location.href = 'tlc_cc_login.html';
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #111827;
+            line-height: 1.5;
+            padding: 12px;
+        }
+        .form-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto 12px;
+            background: #ffffff;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+            align-items: end;
+        }
+        .form-container label {
+            font-weight: 500;
+            font-size: 12px;
+            color: #1f2937;
+            margin-bottom: 3px;
+            display: block;
+        }
+        .form-container select,
+        .form-container input[type="date"],
+        .form-container input[type="text"] {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            font-size: 12px;
+            background: #ffffff;
+            color: #111827;
+        }
+        .form-container select:focus,
+        .form-container input[type="date"]:focus,
+        .form-container input[type="text"]:focus {
+            border-color: #1e3a8a;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.15);
+        }
+        .form-container button {
+            padding: 6px 16px;
+            background-color: #1e3a8a;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .error {
+            color: #dc2626;
+            font-size: 11px;
+            margin: 6px auto;
+            max-width: 100%;
+            text-align: center;
+        }
+        .loading {
+            color: #0e7490;
+            font-size: 11px;
+            margin: 6px auto;
+            max-width: 100%;
+            text-align: center;
+        }
+        .table-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+            border: 1px solid #000000;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        th, td {
+            padding: 5px 6px;
+            text-align: left;
+            border: 1px solid #000000;
+            vertical-align: top;
+        }
+        th:nth-child(-n+10), td:nth-child(-n+10) {
+            text-align: center;
+        }
+        th {
+            background-color: #4b5563;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 11px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            text-transform: uppercase;
+        }
+        td {
+            background-color: #ffffff;
+            color: #1f2937;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+        tr:nth-child(even) td {
+            background-color: #f9fafb;
+        }
+        tr.forwarded-row td {
+            background-color: #d4edda !important;
+        }
+        th:nth-child(1), td:nth-child(1) { width: 6%; }
+        th:nth-child(2), td:nth-child(2) { width: 8%; }
+        th:nth-child(3), td:nth-child(3) { width: 6%; }
+        th:nth-child(4), td:nth-child(4) { width: 8%; }
+        th:nth-child(5), td:nth-child(5) { width: 8%; }
+        th:nth-child(6), td:nth-child(6) { width: 5%; }
+        th:nth-child(7), td:nth-child(7) { width: 5%; }
+        th:nth-child(8), td:nth-child(8) { 
+            width: 3%; 
+            max-width: 50px; 
+        }
+        th:nth-child(8) {
+            white-space: normal;
+            overflow-wrap: break-word;
+            line-height: 1.2;
+            padding: 2px 3px;
+            min-height: 40px;
+            hyphens: auto;
+            font-size: 12px;
+        }
+        th:nth-child(9), td:nth-child(9) { width: 6%; }
+        th:nth-child(10), td:nth-child(10) { width: 4%; }
+        th:nth-child(11), td:nth-child(11) { width: 8%; }
+        th:nth-child(12), td:nth-child(12) { width: 6%; }
+        th:nth-child(13), td:nth-child(13) { width: 10%; }
+        th:nth-child(14), td:nth-child(14) { width: 10%; }
+        th:nth-child(15), td:nth-child(15) { width: 5%; }
+        input[type="text"] {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            font-size: 12px;
+            background: #ffffff;
+            text-align: left;
+        }
+        select {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            font-size: 12px;
+            background: #ffffff;
+            color: #111827;
+            text-align: left;
+        }
+        textarea {
+            width: 100%;
+            min-width: 120px;
+            min-height: 35px;
+            padding: 4px 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            font-size: 12px;
+            background: #ffffff;
+            resize: vertical;
+            text-align: left;
+        }
+        input[type="text"]:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.15);
+            outline: none;
+        }
+        td button {
+            width: 100%;
+            padding: 4px 10px;
+            background-color: #15803d;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            font-size: 10.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        td button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .tlc-dialog {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            min-width: 300px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        .tlc-dialog label {
+            font-weight: 500;
+            font-size: 11px;
+            color: #1f2937;
+            margin-bottom: 3px;
+            display: block;
+        }
+        .tlc-dialog input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-bottom: 12px;
+        }
+        .tlc-dialog button.submit-button {
+            width: 100%;
+            padding: 6px 16px;
+            background-color: #1e3a8a;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .tlc-dialog button.close-button {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 20px;
+            height: 20px;
+            background-color: #dc2626;
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        .tlc-dialog button.close-button:hover {
+            background-color: #b91c1c;
+        }
+        .tlc-dialog-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        @media (max-width: 768px) {
+            .form-container {
+                grid-template-columns: 1fr;
+            }
+            .form-container button {
+                width: 100%;
+            }
+            th, td {
+                font-size: 9.5px;
+                padding: 4px 5px;
+            }
+            input[type="text"],
+            select,
+            textarea,
+            td button {
+                font-size: 9.5px;
+                padding: 3px 4px;
+            }
+            textarea {
+                min-width: 100px;
+                min-height: 30px;
+            }
+            th:nth-child(8), td:nth-child(8) {
+                width: 3%;
+                max-width: 40px;
+            }
+            th:nth-child(8) {
+                padding: 2px 3px;
+                font-size: 9px;
+                min-height: 35px;
+            }
+            th:nth-child(14), td:nth-child(14) { width: 12%; }
+            th:nth-child(15), td:nth-child(15) { width: 8%; }
+            .tlc-dialog {
+                min-width: 80%;
+                max-width: 90%;
+                max-height: 70vh;
+            }
+        }
+        @media (max-width: 480px) {
+            textarea {
+                min-width: 80px;
+            }
+            th:nth-child(13), td:nth-child(13) { width: 11.5%; }
+            th:nth-child(14), td:nth-child(14) { width: 11.5%; }
+            th:nth-child(15), td:nth-child(15) { width: 10%; }
+            th:nth-child(8), td:nth-child(8) {
+                width: 4%;
+                max-width: 35px;
+            }
+            th:nth-child(8) {
+                padding: 2px;
+                font-size: 8px;
+                min-height: 30px;
+            }
+            .tlc-dialog {
+                min-width: 90%;
+                max-height: 60vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="tlc-dialog-overlay" id="tlcDialogOverlay"></div>
+    <div class="tlc-dialog" id="tlcDialog">
+        <button id="closeTlcDialog" class="close-button" onclick="closeTlcDialog()">X</button>
+        <label for="tlcNameInput">TLC Name:</label>
+        <input type="text" id="tlcNameInput" placeholder="Enter TLC Name">
+        <label for="tlcMobileInput">TLC Mobile Number:</label>
+        <input type="text" id="tlcMobileInput" placeholder="Enter Mobile Number">
+        <button class="submit-button" onclick="submitTlcDialog()">SUBMIT</button>
+    </div>
+    <div class="form-container">
+        <label for="section">Section:</label>
+        <select id="section">
+            <option value="BSP-CPH-DIPKA">BSP-CPH-DIPKA</option>
+            <option value="SGRD-RIG-JSG">SGRD-RIG-JSG</option>
+            <option value="CIC">CIC</option>
+        </select>
+        <label for="tlcName">Select TLC Name:</label>
+        <select id="tlcName">
+            <option value="" disabled selected>Select TLC Name</option>
+        </select>
+        <label for="fromDate">From Date:</label>
+        <input type="date" id="fromDate">
+        <label for="toDate">To Date:</label>
+        <input type="date" id="toDate">
+        <button onclick="showReport()">Show Report</button>
+    </div>
+    <div id="error" class="error"></div>
+    <div id="loading" class="loading"></div>
+    <div class="table-container">
+        <table id="reportTable">
+            <thead>
+                <tr>
+                    <th>LP ID</th>
+                    <th>LP Name</th>
+                    <th>LP Mobile</th>
+                    <th>ALP Name</th>
+                    <th>Sign On Time</th>
+                    <th>Train No</th>
+                    <th>LOCO No</th>
+                    <th>Last Passed Station</th>
+                    <th>Crew Entry Time</th>
+                    <th>DUTY HRS</th>
+                    <th>Current Location</th>
+                    <th>Assign Lobby</th>
+                    <th>TLC Remark</th>
+                    <th>CC L/H Remark</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="reportBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        console.log('Initial global hours check:', {
+            exists: typeof window.hours !== 'undefined',
+            value: window.hours,
+            allHours: Object.keys(window).filter(k => k.toLowerCase().includes('hours'))
+        });
+
+        const CLIENT_ID = '547073147985-ap3u2ed867imq6q810gjc82jfsme6tqm.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyBf3C_Ly8bIF_f-t30wE2e7cMsc2hz0co0';
+        const SPREADSHEET_ID = '1Eob3yiujIi0sNtsPQr_HCvQtlybXnq6K11bm1wAcqAo';
+        const SHEET_NAME = 'input';
+        const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+
+        let tokenClient;
+        let accessToken = null;
+        let tlcData = [
+            { name: "John Doe", mobile: "1234567890" },
+            { name: "Jane Smith", mobile: "0987654321" },
+            { name: "Amit Kumar", mobile: "9876543210" }
+        ];
+        let customTlc = null;
+
+        async function loadTlcData() {
+            try {
+                const response = await fetch('TLC.csv');
+                if (!response.ok) throw new Error(`Failed to fetch TLC.csv: ${response.statusText}`);
+                const csvText = await response.text();
+                console.log('Raw TLC.csv content:', csvText);
+                const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+                console.log('Parsed TLC.csv headers:', parsed.meta.fields);
+                console.log('Parsed TLC.csv data:', parsed.data);
+                const nameField = parsed.meta.fields.find(key => 
+                    key.toLowerCase() === 'tlc name' || 
+                    key.toLowerCase().includes('name') || 
+                    key.toLowerCase().includes('tlc')
+                );
+                const mobileField = parsed.meta.fields.find(key => 
+                    key.toLowerCase() === 'tlc mobile number' || 
+                    key.toLowerCase().includes('mobile') || 
+                    key.toLowerCase().includes('phone')
+                );
+                if (!nameField) throw new Error('No valid name column found in TLC.csv');
+                tlcData = parsed.data.map(row => {
+                    const rowData = {
+                        name: nameField ? (row[nameField] || '').trim() : '',
+                        mobile: mobileField ? (row[mobileField] || '').trim() : ''
+                    };
+                    console.log('Processing row:', rowData);
+                    return rowData;
+                }).filter(tlc => tlc.name);
+                if (tlcData.length === 0) throw new Error('No valid data in TLC.csv. Expected headers: "TLC NAME" or "Name", "TLC MOBILE NUMBER" or "Mobile".');
+                console.log('Processed TLC.csv tlcData:', tlcData);
+            } catch (error) {
+                console.error('Error loading TLC.csv:', error);
+                document.getElementById('error').innerText = 'TLC.csv has invalid format or missing data. Expected headers: "TLC NAME" or "Name", "TLC MOBILE NUMBER" or "Mobile". Using fallback data.';
+            }
+        }
+
+        function populateTlcDropdown() {
+            const tlcSelect = document.getElementById('tlcName');
+            tlcSelect.innerHTML = '<option value="" disabled selected>Select TLC Name</option>';
+            tlcData.forEach(tlc => {
+                const option = document.createElement('option');
+                option.value = tlc.name;
+                option.text = tlc.name;
+                tlcSelect.appendChild(option);
+            });
+            const otherOption = document.createElement('option');
+            otherOption.value = 'OTHER';
+            otherOption.text = 'OTHER';
+            tlcSelect.appendChild(otherOption);
+        }
+
+        async function initGoogleAPI() {
+            if (!window.location.protocol.startsWith('https')) {
+                document.getElementById('error').innerText = 'Warning: Running on HTTP may cause authentication errors. Use HTTPS for best results.';
+            }
+
+            await loadTlcData();
+            populateTlcDropdown();
+
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+
+            const formatDate = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            document.getElementById('fromDate').value = formatDate(yesterday);
+            document.getElementById('toDate').value = formatDate(today);
+
+            gapi.load('client', () => {
+                gapi.client.init({
+                    apiKey: API_KEY,
+                    discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+                }).then(() => {
+                    tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: CLIENT_ID,
+                        scope: SCOPES,
+                        callback: (tokenResponse) => {
+                            if (tokenResponse.error) {
+                                document.getElementById('error').innerText = 'Authentication failed: ' + tokenResponse.error;
+                                return;
+                            }
+                            accessToken = tokenResponse.access_token;
+                            document.getElementById('loading').innerText = 'Authenticated successfully!';
+                            setTimeout(() => { document.getElementById('loading').innerText = ''; }, 2000);
+                        },
+                    });
+                    tokenClient.requestAccessToken();
+                }).catch((error) => {
+                    document.getElementById('error').innerText = 'Error initializing Google API: ' + error.message;
+                });
+            });
+        }
+
+        document.getElementById('tlcName').addEventListener('change', function() {
+            if (this.value === 'OTHER') {
+                const dialog = document.getElementById('tlcDialog');
+                dialog.style.display = 'block';
+                document.getElementById('tlcDialogOverlay').style.display = 'block';
+                console.log('TLC dialog opened:', {
+                    boundingRect: dialog.getBoundingClientRect(),
+                    windowSize: { width: window.innerWidth, height: window.innerHeight }
+                });
+            }
+        });
+
+        function closeTlcDialog() {
+            const dialog = document.getElementById('tlcDialog');
+            dialog.style.display = 'none';
+            document.getElementById('tlcDialogOverlay').style.display = 'none';
+            document.getElementById('tlcNameInput').value = '';
+            document.getElementById('tlcMobileInput').value = '';
+            document.getElementById('tlcName').value = '';
+            document.getElementById('error').innerText = '';
+            console.log('TLC dialog closed:', {
+                boundingRect: dialog.getBoundingClientRect(),
+                dropdownValue: document.getElementById('tlcName').value
+            });
+        }
+
+        function submitTlcDialog() {
+            const tlcName = document.getElementById('tlcNameInput').value.trim();
+            const tlcMobile = document.getElementById('tlcMobileInput').value.trim();
+            if (!tlcName || !tlcMobile) {
+                document.getElementById('error').innerText = 'Please enter both TLC Name and Mobile Number.';
+                return;
+            }
+            if (!/^\d{10}$/.test(tlcMobile)) {
+                document.getElementById('error').innerText = 'TLC Mobile Number must be exactly 10 digits.';
+                return;
+            }
+            customTlc = { name: tlcName, mobile: tlcMobile };
+            const tlcSelect = document.getElementById('tlcName');
+            const existingOption = Array.from(tlcSelect.options).find(opt => opt.value === tlcName);
+            if (!existingOption) {
+                const option = document.createElement('option');
+                option.value = tlcName;
+                option.text = tlcName;
+                tlcSelect.insertBefore(option, tlcSelect.querySelector('option[value="OTHER"]'));
+            }
+            tlcSelect.value = tlcName;
+            document.getElementById('tlcDialog').style.display = 'none';
+            document.getElementById('tlcDialogOverlay').style.display = 'none';
+            document.getElementById('tlcNameInput').value = '';
+            document.getElementById('tlcMobileInput').value = '';
+            document.getElementById('error').innerText = '';
+            console.log('TLC dialog submitted:', { tlcName, tlcMobile, dropdownValue: tlcSelect.value });
+        }
+
+        function getTlcMobile(tlcName) {
+            if (customTlc && tlcName === customTlc.name) {
+                return customTlc.mobile;
+            }
+            const tlc = tlcData.find(t => t.name === tlcName);
+            return tlc ? tlc.mobile : '';
+        }
+
+        function calculateDutyHours(signOnTime, currentTime) {
+            if (!signOnTime) return '';
+            try {
+                const [datePart, timePart] = signOnTime.split(' ');
+                if (!datePart || !timePart) return '';
+                const [day, month, year] = datePart.split('/').map(Number);
+                const [hours, minutes, seconds = 0] = timePart.split(':').map(Number);
+                if (!day || !month || !year || isNaN(hours) || isNaN(minutes)) return '';
+
+                const signOnDate = new Date(year, month - 1, day, hours, minutes, seconds);
+                if (isNaN(signOnDate.getTime())) return '';
+
+                const diffMs = currentTime - signOnDate;
+                if (diffMs < 0) return '';
+
+                const totalMinutes = Math.floor(diffMs / 1000 / 60);
+                const dutyHours = Math.floor(totalMinutes / 60);
+                const dutyMinutes = totalMinutes % 60;
+
+                return `${dutyHours.toString().padStart(2, '0')}:${dutyMinutes.toString().padStart(2, '0')}`;
+            } catch (error) {
+                console.error('Error calculating duty hours:', error);
+                return '';
+            }
+        }
+
+        function showReport() {
+            const section = document.getElementById('section').value;
+            const tlcName = document.getElementById('tlcName').value;
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+
+            if (!tlcName) {
+                document.getElementById('error').innerText = 'Please select a TLC Name.';
+                return;
+            }
+            if (!fromDate || !toDate) {
+                document.getElementById('error').innerText = 'Please select both From Date and To Date.';
+                return;
+            }
+
+            if (!tokenClient) {
+                document.getElementById('error').innerText = 'Google API not initialized. Please wait and try again.';
+                setTimeout(showReport, 2000);
+                return;
+            }
+
+            if (!accessToken) {
+                document.getElementById('error').innerText = 'Not authenticated. Requesting access...';
+                tokenClient.requestAccessToken();
+                setTimeout(showReport, 3000);
+                return;
+            }
+
+            document.getElementById('loading').innerText = 'Fetching data...';
+            gapi.client.sheets.spreadsheets.values.get({
+                spreadsheetId: SPREADSHEET_ID,
+                range: `${SHEET_NAME}!A:AC`,
+            }).then((response) => {
+                document.getElementById('loading').innerText = '';
+                const values = response.result.values || [];
+                const tbody = document.getElementById('reportBody');
+                tbody.innerHTML = '';
+                document.getElementById('error').innerText = '';
+
+                const currentTime = new Date();
+
+                const filteredData = values.filter((row, index) => {
+                    if (index === 0) return false;
+                    const rowSection = row[12] || '';
+                    const rowDate = row[6] ? (row[6].includes('/') ? row[6].split('/').reverse().join('-') : row[6]) : '';
+                    const hasNoSignOffTime = !row[22];
+                    const dateMatch = (!fromDate || rowDate >= fromDate) && (!toDate || rowDate <= toDate);
+                    const sectionMatch = rowSection === section;
+                    return dateMatch && sectionMatch && hasNoSignOffTime;
+                });
+
+                if (filteredData.length === 0) {
+                    document.getElementById('error').innerText = 'No data found for the selected section and date range.';
+                }
+
+                filteredData.forEach((row, index) => {
+                    const rowIndex = values.indexOf(row) + 1;
+                    const forwardCount = parseInt(row[28]) || 0; // AC column (29th, 0-based index 28)
+                    const isForwarded = forwardCount > 0;
+                    const isMaxForwarded = forwardCount >= 2;
+                    const dutyHours = calculateDutyHours(row[7], currentTime);
+                    const tr = document.createElement('tr');
+                    tr.id = `row_${index}`;
+                    if (isForwarded) {
+                        tr.classList.add('forwarded-row');
+                    }
+
+                    // Prepare CC L/H Remark column content
+                    let cccContent = [];
+                    if (row[21]) {
+                        cccContent.push(row[21]); // CCC Remark
+                    }
+                    // Add CC L/H Name and Mobile Number only if at least one exists
+                    if (row[26] || row[27]) {
+                        cccContent.push(`(${row[26] || ''}/ ${row[27] || ''})`);
+                    }
+                    const cccDisplay = cccContent.join('<br>');
+
+                    tr.innerHTML = `
+                        <td>${row[0] || ''}</td>
+                        <td>${row[1] || ''}</td>
+                        <td>${row[2] || ''}</td>
+                        <td>${row[4] || ''}</td>
+                        <td>${row[7] || ''}</td>
+                        <td>${row[9] || ''}</td>
+                        <td>${row[10] || ''}</td>
+                        <td>${row[11] || ''}</td>
+                        <td>${row[13] || ''}</td>
+                        <td>${dutyHours}</td>
+                        <td><input type="text" id="currentLocation_${index}" value="${row[17] || ''}" placeholder="Enter Location" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase(); validateRow(${index}, ${rowIndex})" ${isMaxForwarded ? 'disabled="disabled"' : ''}></td>
+                        <td>
+                            <select id="assignLobby_${index}" oninput="validateRow(${index}, ${rowIndex})" ${isMaxForwarded ? 'disabled="disabled"' : ''}>
+                                <option value="" disabled ${!row[18] ? 'selected' : ''}>Select Lobby</option>
+                                <option value="AKT" ${row[18] === 'AKT' ? 'selected' : ''}>AKT</option>
+                                <option value="BJRI" ${row[18] === 'BJRI' ? 'selected' : ''}>BJRI</option>
+                                <option value="BRJN" ${row[18] === 'BRJN' ? 'selected' : ''}>BRJN</option>
+                                <option value="BSP" ${row[18] === 'BSP' ? 'selected' : ''}>BSP</option>
+                                <option value="KHS" ${row[18] === 'KHS' ? 'selected' : ''}>KHS</option>
+                                <option value="KRBA" ${row[18] === 'KRBA' ? 'selected' : ''}>KRBA</option>
+                                <option value="PND" ${row[18] === 'PND' ? 'selected' : ''}>PND</option>
+                                <option value="RIG" ${row[18] === 'RIG' ? 'selected' : ''}>RIG</option>
+                                <option value="SDL" ${row[18] === 'SDL' ? 'selected' : ''}>SDL</option>
+                                <option value="SJQ" ${row[18] === 'SJQ' ? 'selected' : ''}>SJQ</option>
+                                <option value="USL" ${row[18] === 'USL' ? 'selected' : ''}>USL</option>
+                            </select>
+                        </td>
+                        <td><textarea id="tlcRemark_${index}" placeholder="Enter TLC Remark" oninput="validateRow(${index}, ${rowIndex})" ${isMaxForwarded ? 'disabled="disabled"' : ''}>${row[19] || ''}</textarea></td>
+                        <td>${cccDisplay}</td>
+                        <td><button id="forwardButton_${index}" onclick="forwardData(${rowIndex}, ${index})" ${isMaxForwarded ? 'disabled="disabled"' : 'disabled'}>Forward</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                    validateRow(index, rowIndex);
+                    console.log(`Row ${index}: rowIndex=${rowIndex}, forwardCount=${forwardCount}, isForwarded=${isForwarded}, isMaxForwarded=${isMaxForwarded}`);
+                });
+            }).catch((error) => {
+                document.getElementById('loading').innerText = '';
+                document.getElementById('error').innerText = `Error fetching data: ${error.result?.error?.message || error.message}`;
+                if (error.status === 400) {
+                    document.getElementById('error').innerText += ' (Check if the sheet name "input" exists and has data in range A:AC)';
+                } else if (error.status === 401 || error.status === 403) {
+                    document.getElementById('error').innerText += ' (Invalid or expired token. Re-authenticating...)';
+                    tokenClient.requestAccessToken();
+                    setTimeout(showReport, 3000);
+                }
+                console.error('showReport error:', error);
+            });
+        }
+
+        function validateRow(index, rowIndex) {
+            const currentLocationInput = document.getElementById(`currentLocation_${index}`);
+            const assignLobby = document.getElementById(`assignLobby_${index}`).value;
+            const tlcRemark = document.getElementById(`tlcRemark_${index}`).value.trim();
+            const forwardButton = document.getElementById(`forwardButton_${index}`);
+
+            if (currentLocationInput.disabled) {
+                forwardButton.disabled = true;
+                console.log(`validateRow: index=${index}, rowIndex=${rowIndex}, button disabled (inputs disabled)`);
+                return;
+            }
+
+            const currentLocation = currentLocationInput.value.trim();
+            if (currentLocation && assignLobby && tlcRemark) {
+                forwardButton.disabled = false;
+                console.log(`validateRow: index=${index}, rowIndex=${rowIndex}, button enabled`);
+            } else {
+                forwardButton.disabled = true;
+                console.log(`validateRow: index=${index}, rowIndex=${rowIndex}, button disabled (incomplete fields)`);
+            }
+        }
+
+        function forwardData(rowIndex, index) {
+            console.log('forwardData called:', { rowIndex, index });
+
+            if (!tokenClient) {
+                document.getElementById('error').innerText = 'Google API not initialized. Please wait and try again.';
+                setTimeout(() => forwardData(rowIndex, index), 2000);
+                return;
+            }
+
+            if (!accessToken) {
+                document.getElementById('error').innerText = 'Not authenticated. Requesting access...';
+                tokenClient.requestAccessToken();
+                setTimeout(() => forwardData(rowIndex, index), 3000);
+                return;
+            }
+
+            const currentLocation = document.getElementById(`currentLocation_${index}`).value.trim().toUpperCase();
+            const assignLobby = document.getElementById(`assignLobby_${index}`).value;
+            const tlcRemark = document.getElementById(`tlcRemark_${index}`).value.trim();
+            const tlcName = document.getElementById('tlcName').value;
+            const tlcMobile = getTlcMobile(tlcName);
+
+            if (!currentLocation || !assignLobby || !tlcRemark) {
+                document.getElementById('error').innerText = 'Please fill Current Location, Assign Lobby, and TLC Remark.';
+                console.log('forwardData failed: incomplete fields');
+                return;
+            }
+
+            try {
+                const now = new Date();
+                const tlcTimestamp = now.toLocaleString('en-IN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                }).replace(/,/, '').replace(/(\d+)\/(\d+)\/(\d+)/, '$1/$2/$3');
+
+                document.getElementById('loading').innerText = 'Fetching forward count...';
+                gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: SPREADSHEET_ID,
+                    range: `${SHEET_NAME}!AC${rowIndex}`,
+                }).then((response) => {
+                    console.log('Raw API response for AC fetch:', response.result);
+                    const forwardCount = parseInt(response.result.values?.[0]?.[0]) || 0;
+                    const newForwardCount = forwardCount + 1;
+                    console.log(`AC${rowIndex}: forwardCount=${forwardCount}, newForwardCount=${newForwardCount}`);
+
+                    if (newForwardCount > 2) {
+                        document.getElementById('error').innerText = 'Maximum forward limit (2) reached for this row.';
+                        document.getElementById('loading').innerText = '';
+                        console.log('forwardData failed: max forwards reached');
+                        return;
+                    }
+
+                    document.getElementById('loading').innerText = 'Updating data...';
+                    gapi.client.sheets.spreadsheets.values.batchUpdate({
+                        spreadsheetId: SPREADSHEET_ID,
+                        resource: {
+                            valueInputOption: 'RAW',
+                            data: [
+                                {
+                                    range: `${SHEET_NAME}!Q${rowIndex}:T${rowIndex}`,
+                                    values: [[tlcTimestamp, currentLocation, assignLobby, tlcRemark]]
+                                },
+                                {
+                                    range: `${SHEET_NAME}!Y${rowIndex}:Z${rowIndex}`,
+                                    values: [[tlcName, tlcMobile]]
+                                },
+                                {
+                                    range: `${SHEET_NAME}!AC${rowIndex}`,
+                                    values: [[newForwardCount]]
+                                }
+                            ]
+                        }
+                    }).then((updateResponse) => {
+                        console.log('Batch update response:', updateResponse);
+                        document.getElementById('loading').innerText = '';
+                        alert('Data updated successfully!');
+                        console.log(`forwardData success: rowIndex=${rowIndex}, newForwardCount=${newForwardCount}`);
+                        const row = document.getElementById(`row_${index}`);
+                        if (row) {
+                            row.classList.add('forwarded-row');
+                            console.log(`Applied forwarded-row class to row_${index}`);
+                        } else {
+                            console.error(`Row row_${index} not found`);
+                        }
+                        if (newForwardCount >= 2) {
+                            document.getElementById(`currentLocation_${index}`).disabled = true;
+                            document.getElementById(`assignLobby_${index}`).disabled = true;
+                            document.getElementById(`tlcRemark_${index}`).disabled = true;
+                            document.getElementById(`forwardButton_${index}`).disabled = true;
+                            console.log(`Disabled inputs for row_${index} (forwardCount=${newForwardCount})`);
+                        }
+                        // Verify update
+                        gapi.client.sheets.spreadsheets.values.get({
+                            spreadsheetId: SPREADSHEET_ID,
+                            range: `${SHEET_NAME}!AC${rowIndex}`,
+                        }).then((verifyResponse) => {
+                            const verifiedCount = parseInt(verifyResponse.result.values?.[0]?.[0]) || 0;
+                            console.log(`Verified AC${rowIndex} after update: ${verifiedCount}`);
+                            if (verifiedCount !== newForwardCount) {
+                                console.error(`Update mismatch: expected ${newForwardCount}, got ${verifiedCount}`);
+                                document.getElementById('error').innerText = 'Update failed: Forward count not updated correctly. Please try again.';
+                            }
+                        }).catch((verifyError) => {
+                            console.error('Error verifying update:', verifyError);
+                        });
+                    }).catch((error) => {
+                        document.getElementById('loading').innerText = '';
+                        document.getElementById('error').innerText = `Error updating data: ${error.result?.error?.message || error.message}`;
+                        if (error.status === 401 || error.status === 403) {
+                            document.getElementById('error').innerText += ' (Invalid or expired token. Re-authenticating...)';
+                            tokenClient.requestAccessToken();
+                            setTimeout(() => forwardData(rowIndex, index), 3000);
+                        }
+                        console.error('forwardData update error:', error);
+                    });
+                }).catch((error) => {
+                    document.getElementById('loading').innerText = '';
+                    document.getElementById('error').innerText = `Error fetching forward count: ${error.result?.error?.message || error.message}`;
+                    console.error('forwardData fetch error:', error);
+                });
+            } catch (error) {
+                document.getElementById('loading').innerText = '';
+                document.getElementById('error').innerText = `Error formatting timestamp: ${error.message}`;
+                console.error('forwardData timestamp error:', error);
+            }
+        }
+
+        window.onload = initGoogleAPI;
+    </script>
+</body>
+</html>

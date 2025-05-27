@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>CCC Report and Update</title>
+    <script src="https://apis.google.com/js/api.js?v=2025052205"></script>
+    <script src="https://accounts.google.com/gsi/client?v=2025052205"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        // Token validation
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        const urlToken = getQueryParam('token');
+        const storedToken = localStorage.getItem('ccToken');
+
+        if (!urlToken || !storedToken || urlToken !== storedToken) {
+            alert('Unauthorized access. Please login first.');
+            localStorage.removeItem('ccToken');
+            window.location.href = 'tlc_cc_login.html';
+        }
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #111827;
+            line-height: 1.5;
+            padding: 12px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .form-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto 12px;
+            background: #ffffff;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+            align-items: end;
+        }
+        .form-container label {
+            font-weight: 500;
+            font-size: 12px;
+            color: #1f2937;
+            margin-bottom: 3px;
+            display: block;
+        }
+        .form-container select,
+        .form-container input[type="date"],
+        .form-container input[type="text"] {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            font-size: 12px;
+            background: #ffffff;
+            color: #111827;
+        }
+        .form-container select:focus,
+        .form-container input[type="date"]:focus,
+        .form-container input[type="text"]:focus {
+            border-color: #1e3a8a;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.15);
+        }
+        .form-container button {
+            padding: 6px 16px;
+            background-color: #1e3a8a;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .error {
+            color: #dc2626;
+            font-size: 11px;
+            margin: 6px auto;
+            max-width: 100%;
+            text-align: center;
+        }
+        .loading {
+            color: #0e7490;
+            font-size: 11px;
+            margin: 6px auto;
+            max-width: 100%;
+            text-align: center;
+        }
+        .table-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            overflow-x: auto;
+            overflow-y: auto;
+            position: relative;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        table {
+            width: 100%;
+            min-width: 1200px;
+            border-collapse: collapse;
+            background: #ffffff;
+            border: 1px solid #000000;
+            border-radius: 4px;
+            font-size: 12px;
+            table-layout: auto;
+            height: 100%;
+        }
+        th, td {
+            padding: 5px 6px;
+            text-align: left;
+            border: 1px solid #000000;
+            vertical-align: top;
+        }
+        th:nth-child(-n+10), td:nth-child(-n+10) {
+            text-align: center;
+        }
+        th {
+            background-color: #4b5563;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 11px;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            text-transform: uppercase;
+        }
+        td {
+            background-color: #ffffff;
+            color: #1f2937;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+        tr:nth-child(even) td {
+            background-color: #f9fafb;
+        }
+        .partial-submit td,
+        .has-ccc-remark td {
+            background-color: #fed7aa !important;
+            color: #1f2937 !important;
+        }
+        /* Column Widths for OUR CREW (in pixels) */
+        th.our-crew:nth-child(1), td.our-crew:nth-child(1) { width: 60px; }
+        th.our-crew:nth-child(2), td.our-crew:nth-child(2) { width: 100px; }
+        th.our-crew:nth-child(3), td.our-crew:nth-child(3) { width: 80px; }
+        th.our-crew:nth-child(4), td.our-crew:nth-child(4) { width: 100px; }
+        th.our-crew:nth-child(5), td.our-crew:nth-child(5) { width: 80px; }
+        th.our-crew:nth-child(6), td.our-crew:nth-child(6) { width: 50px; }
+        th.our-crew:nth-child(7), td.our-crew:nth-child(7) { width: 50px; }
+        th.our-crew:nth-child(8), td.our-crew:nth-child(8) { width: 80px; }
+        th.our-crew:nth-child(9), td.our-crew:nth-child(9) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
+        td.our-crew:nth-child(9) { background: #ffffff; color: #1f2937; z-index: 1; }
+        th.our-crew:nth-child(10), td.our-crew:nth-child(10) { width: 60px; }
+        th.our-crew:nth-child(11), td.our-crew:nth-child(11) { width: 60px; }
+        th.our-crew:nth-child(12), td.our-crew:nth-child(12) { width: 60px; }
+        th.our-crew:nth-child(13), td.our-crew:nth-child(13) { width: 100px; }
+        th.our-crew:nth-child(14), td.our-crew:nth-child(14) { width: 80px; }
+        th.our-crew:nth-child(15), td.our-crew:nth-child(15) { width: 70px; }
+        th.our-crew:nth-child(16), td.our-crew:nth-child(16) { width: 70px; }
+        /* Column Widths for OUR JURISDICTION (in pixels) */
+        th.our-jurisdiction:nth-child(1), td.our-jurisdiction:nth-child(1) { width: 60px; }
+        th.our-jurisdiction:nth-child(2), td.our-jurisdiction:nth-child(2) { width: 100px; }
+        th.our-jurisdiction:nth-child(3), td.our-jurisdiction:nth-child(3) { width: 80px; }
+        th.our-jurisdiction:nth-child(4), td.our-jurisdiction:nth-child(4) { width: 100px; }
+        th.our-jurisdiction:nth-child(5), td.our-jurisdiction:nth-child(5) { width: 80px; }
+        th.our-jurisdiction:nth-child(6), td.our-jurisdiction:nth-child(6) { width: 50px; }
+        th.our-jurisdiction:nth-child(7), td.our-jurisdiction:nth-child(7) { width: 50px; }
+        th.our-jurisdiction:nth-child(8), td.our-jurisdiction:nth-child(8) { width: 80px; }
+        th.our-jurisdiction:nth-child(9), td.our-jurisdiction:nth-child(9) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
+        td.our-jurisdiction:nth-child(9) { background: #ffffff; color: #1f2937; z-index: 1; }
+        th.our-jurisdiction:nth-child(10), td.our-jurisdiction:nth-child(10) { width: 60px; }
+        th.our-jurisdiction:nth-child(11), td.our-jurisdiction:nth-child(11) { width: 70px; }
+        th.our-jurisdiction:nth-child(12), td.our-jurisdiction:nth-child(12) { width: 120px; }
+        th.our-jurisdiction:nth-child(13), td.our-jurisdiction:nth-child(13) { width: 90px; }
+        th.our-jurisdiction:nth-child(14), td.our-jurisdiction:nth-child(14) { width: 80px; }
+        th.our-jurisdiction:nth-child(15), td.our-jurisdiction:nth-child(15) { width: 70px; }
+        /* Remove truncation for LP Name and ALP Name */
+        td.our-crew:nth-child(2), td.our-crew:nth-child(4),
+        td.our-jurisdiction:nth-child(2), td.our-jurisdiction:nth-child(4) {
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+        /* Truncate long text in other specific columns */
+        td.our-crew:nth-child(10), td.our-crew:nth-child(11),
+        td.our-jurisdiction:nth-child(10) {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .yellow-star {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 12px;
+            color: #5f19e0;
+            cursor: pointer;
+            z-index: 2;
+            line-height: 1;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            font-size: 12px;
+            background: #ffffff;
+            text-align: left;
+            max-width: 100%;
+            box-sizing: border-box;
+            text-transform: uppercase;
+        }
+        input[type="datetime-local"] {
+            width: 100%;
+            padding: 5px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+            background: #f8fafc;
+            color: #111827;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        input[type="datetime-local"]:focus {
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.2);
+            outline: none;
+        }
+        textarea {
+            width: 100%;
+            min-width: 120px;
+            min-height: 35px;
+            padding: 4px 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            font-size: 12px;
+            background: #ffffff;
+            resize: vertical;
+            text-align: left;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus,
+        textarea:focus {
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.15);
+            outline: none;
+        }
+        td button {
+            width: 100%;
+            padding: 4px 10px;
+            background-color: #15803d;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        td button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .ccc-dialog {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            min-width: 300px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        .ccc-dialog label {
+            font-weight: 500;
+            font-size: 11px;
+            color: #1f2937;
+            margin-bottom: 3px;
+            display: block;
+        }
+        .ccc-dialog input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-bottom: 12px;
+        }
+        .ccc-dialog button.submit-button {
+            width: 100%;
+            padding: 6px 16px;
+            background-color: #1e3a8a;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .ccc-dialog button.close-button {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 20px;
+            height: 20px;
+            background-color: #dc2626;
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        .ccc-dialog button.close-button:hover {
+            background-color: #b91c1c;
+        }
+        .ccc-dialog-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        @media (max-width: 768px) {
+            .form-container {
+                grid-template-columns: 1fr;
+            }
+            .form-container button {
+                width: 100%;
+            }
+            th, td {
+                font-size: 9.5px;
+                padding: 4px 5px;
+            }
+            input[type="text"],
+            input[type="datetime-local"],
+            select,
+            textarea,
+            td button {
+                font-size: 10px;
+                padding: 3px 4px;
+            }
+            input[type="datetime-local"] {
+                padding: 4px 6px;
+            }
+            textarea {
+                min-width: 100px;
+                min-height: 30px;
+            }
+            th.our-crew:nth-child(1), td.our-crew:nth-child(1) { width: 60px; }
+            th.our-crew:nth-child(2), td.our-crew:nth-child(2) { width: 100px; }
+            th.our-crew:nth-child(3), td.our-crew:nth-child(3) { width: 80px; }
+            th.our-crew:nth-child(4), td.our-crew:nth-child(4) { width: 100px; }
+            th.our-crew:nth-child(5), td.our-crew:nth-child(5) { width: 80px; }
+            th.our-crew:nth-child(6), td.our-crew:nth-child(6) { width: 50px; }
+            th.our-crew:nth-child(7), td.our-crew:nth-child(7) { width: 50px; }
+            th.our-crew:nth-child(8), td.our-crew:nth-child(8) { width: 80px; }
+            th.our-crew:nth-child(9), td.our-crew:nth-child(9) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
+            td.our-crew:nth-child(9) { background: #ffffff; color: #1f2937; z-index: 1; }
+            th.our-crew:nth-child(10), td.our-crew:nth-child(10) { width: 60px; }
+            th.our-crew:nth-child(11), td.our-crew:nth-child(11) { width: 60px; }
+            th.our-crew:nth-child(12), td.our-crew:nth-child(12) { width: 60px; }
+            th.our-crew:nth-child(13), td.our-crew:nth-child(13) { width: 100px; }
+            th.our-crew:nth-child(14), td.our-crew:nth-child(14) { width: 80px; }
+            th.our-crew:nth-child(15), td.our-crew:nth-child(15) { width: 70px; }
+            th.our-crew:nth-child(16), td.our-crew:nth-child(16) { width: 70px; }
+            th.our-jurisdiction:nth-child(1), td.our-jurisdiction:nth-child(1) { width: 60px; }
+            th.our-jurisdiction:nth-child(2), td.our-jurisdiction:nth-child(2) { width: 100px; }
+            th.our-jurisdiction:nth-child(3), td.our-jurisdiction:nth-child(3) { width: 80px; }
+            th.our-jurisdiction:nth-child(4), td.our-jurisdiction:nth-child(4) { width: 100px; }
+            th.our-jurisdiction:nth-child(5), td.our-jurisdiction:nth-child(5) { width: 80px; }
+            th.our-jurisdiction:nth-child(6), td.our-jurisdiction:nth-child(6) { width: 50px; }
+            th.our-jurisdiction:nth-child(7), td.our-jurisdiction:nth-child(7) { width: 50px; }
+            th.our-jurisdiction:nth-child(8), td.our-jurisdiction:nth-child(8) { width: 80px; }
+            th.our-jurisdiction:nth-child(9), td.our-jurisdiction:nth-child(9) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
+            td.our-jurisdiction:nth-child(9) { background: #ffffff; color: #1f2937; z-index: 1; }
+            th.our-jurisdiction:nth-child(10), td.our-jurisdiction:nth-child(10) { width: 60px; }
+            th.our-jurisdiction:nth-child(11), td.our-jurisdiction:nth-child(11) { width: 70px; }
+            th.our-jurisdiction:nth-child(12), td.our-jurisdiction:nth-child(12) { width: 120px; }
+            th.our-jurisdiction:nth-child(13), td.our-jurisdiction:nth-child(13) { width: 90px; }
+            th.our-jurisdiction:nth-child(14), td.our-jurisdiction:nth-child(14) { width: 80px; }
+            th.our-jurisdiction:nth-child(15), td.our-jurisdiction:nth-child(15) { width: 70px; }
+            .ccc-dialog {
+                min-width: 80%;
+                max-width: 90%;
+                max-height: 70vh;
+            }
+        }
+        @media (max-width: 480px) {
+            textarea {
+                min-width: 80px;
+            }
+            th.our-crew:nth-child(1), td.our-crew:nth-child(1) { width: 60px; }
+            th.our-crew:nth-child(2), td.our-crew:nth-child(2) { width: 100px; }
+            th.our-crew:nth-child(3), td.our-crew:nth-child(3) { width: 80px; }
+            th.our-crew:nth-child(4), td.our-crew:nth-child(4) { width: 100px; }
+            th.our-crew:nth-child(5), td.our-crew:nth-child(5) { width: 80px; }
+            th.our-crew:nth-child(6), td.our-crew:nth-child(6) { width: 50px; }
+            th.our-crew:nth-child(7), td.our-crew:nth-child(7) { width: 50px; }
+            th.our-crew:nth-child(8), td.our-crew:nth-child(8) { width: 80px; }
+            th.our-crew:nth-child(9), td.our-crew:nth-child(9) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
+            td.our-crew:nth-child(9) { background: #ffffff; color: #1f2937; z-index: 1; }
+            th.our-crew:nth-child(10), td.our-crew:nth-child(10) { width: 60px; }
+            th.our-crew:nth-child(11), td.our-crew:nth-child(11) { width: 60px; }
+            th.our-crew:nth-child(12), td.our-crew:nth-child(12) { width: 60px; }
+            th.our-crew:nth-child(13), td.our-crew:nth-child(13) { width: 100px; }
+            th.our-crew:nth-child(14), td.our-crew:nth-child(14) { width: 80px; }
+            th.our-crew:nth-child(15), td.our-crew:nth-child(15) { width: 70px; }
+            th.our-crew:nth-child(16), td.our-crew:nth-child(16) { width: 70px; }
+            th.our-jurisdiction:nth-child(1), td.our-jurisdiction:nth-child(1) { width: 60px; }
+            th.our-jurisdiction:nth-child(2), td.our-jurisdiction:nth-child(2) { width: 100px; }
+            th.our-jurisdiction:nth-child(3), td.our-jurisdiction:nth-child(3) { width: 80px; }
+            th.our-jurisdiction:nth-child(4), td.our-jurisdiction:nth-child(4) { width: 100px; }
+            th.our-jurisdiction:nth-child(5), td.our-jurisdiction:nth-child(5) { width: 80px; }
+            th.our-jurisdiction:nth-child(6), td.our-jurisdiction:nth-child(6) { width: 50px; }
+            th.our-jurisdiction:nth-child(7), td.our-jurisdiction:nth-child(7) { width: 50px; }
+            th.our-jurisdiction:nth-child(8), td.our-jurisdiction:nth-child(8) { width: 80px; }
+            th.our-jurisdiction:nth-child(9), td.our-jurisdiction:nth-child(9) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
+            td.our-jurisdiction:nth-child(9) { background: #ffffff; color: #1f2937; z-index: 1; }
+            th.our-jurisdiction:nth-child(10), td.our-jurisdiction:nth-child(10) { width: 60px; }
+            th.our-jurisdiction:nth-child(11), td.our-jurisdiction:nth-child(11) { width: 70px; }
+            th.our-jurisdiction:nth-child(12), td.our-jurisdiction:nth-child(12) { width: 120px; }
+            th.our-jurisdiction:nth-child(13), td.our-jurisdiction:nth-child(13) { width: 90px; }
+            th.our-jurisdiction:nth-child(14), td.our-jurisdiction:nth-child(14) { width: 80px; }
+            th.our-jurisdiction:nth-child(15), td.our-jurisdiction:nth-child(15) { width: 70px; }
+            .ccc-dialog {
+                min-width: 90%;
+                max-height: 60vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ccc-dialog-overlay" id="cccDialogOverlay"></div>
+    <div class="ccc-dialog" id="cccDialog">
+        <button id="closeCccDialog" class="close-button" onclick="closeCccDialog()">X</button>
+        <label for="cccNameInput">L/H CC Name:</label>
+        <input type="text" id="cccNameInput" placeholder="Enter L/H CC Name">
+        <label for="cccMobileInput">Mobile Number:</label>
+        <input type="text" id="cccMobileInput" placeholder="Enter Mobile Number">
+        <button class="submit-button" onclick="submitCccDialog()">SUBMIT</button>
+    </div>
+    <div class="form-container">
+        <label for="criteria">Select Criteria:</label>
+        <select id="criteria">
+            <option value="OUR CREW">OUR CREW</option>
+            <option value="OUR JURISDICTION">OUR JURISDICTION</option>
+        </select>
+        <label for="lobby">Lobby:</label>
+        <select id="lobby">
+            <option value="AKT">AKT</option>
+            <option value="BJRI">BJRI</option>
+            <option value="BRJN">BRJN</option>
+            <option value="BSP">BSP</option>
+            <option value="KHS">KHS</option>
+            <option value="KRBA">KRBA</option>
+            <option value="PND">PND</option>
+            <option value="RIG">RIG</option>
+            <option value="SDL">SDL</option>
+            <option value="SJQ">SJQ</option>
+            <option value="USL">USL</option>
+        </select>
+        <label for="cccName">Select L/H CC Name:</label>
+        <select id="cccName">
+            <option value="" disabled selected>Select L/H CC Name</option>
+        </select>
+        <label for="fromDate">From Date:</label>
+        <input type="date" id="fromDate">
+        <label for="toDate">To Date:</label>
+        <input type="date" id="toDate">
+        <button onclick="showReport()">Show Report</button>
+    </div>
+    <div id="error" class="error"></div>
+    <div id="loading" class="loading"></div>
+    <div class="table-container">
+        <table id="reportTable">
+            <thead id="tableHeader"></thead>
+            <tbody id="reportBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const CLIENT_ID = '547073147985-ap3u2ed867imq6q810gjc82jfsme6tqm.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyBf3C_Ly8bIF_f-t30wE2e7cMsc2hz0co0';
+        const SPREADSHEET_ID = '1Eob3yiujIi0sNtsPQr_HCvQtlybXnq6K11bm1wAcqAo';
+        const SHEET_NAME = 'input';
+        const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+
+        let tokenClient;
+        let accessToken = null;
+        let cccData = [];
+        let customCcc = null;
+
+        async function loadCccData() {
+            try {
+                const response = await fetch('CCC.csv');
+                if (!response.ok) throw new Error(`Failed to fetch CCC.csv: ${response.statusText}`);
+                const csvText = await response.text();
+                console.log('Raw CCC.csv content:', csvText);
+                const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+                console.log('Parsed CCC.csv headers:', parsed.meta.fields);
+                console.log('Parsed CCC.csv data:', parsed.data);
+                const lobbyField = parsed.meta.fields.find(key => 
+                    key.toLowerCase() === 'lobby' || 
+                    key.toLowerCase().includes('lobby')
+                );
+                const nameField = parsed.meta.fields.find(key => 
+                    key.toLowerCase() === 'l/h cc name' || 
+                    key.toLowerCase().includes('name') || 
+                    key.toLowerCase().includes('l/h cc')
+                );
+                const mobileField = parsed.meta.fields.find(key => 
+                    key.toLowerCase() === 'mobile no' || 
+                    key.toLowerCase().includes('mobile') || 
+                    key.toLowerCase().includes('phone')
+                );
+                if (!lobbyField || !nameField || !mobileField) throw new Error('Missing required columns in CCC.csv');
+                cccData = parsed.data.map(row => {
+                    const rowData = {
+                        lobby: lobbyField ? (row[lobbyField] || '').trim() : '',
+                        name: nameField ? (row[nameField] || '').trim() : '',
+                        mobile: mobileField ? (row[mobileField] || '').trim() : ''
+                    };
+                    console.log('Processing row:', rowData);
+                    return rowData;
+                }).filter(ccc => ccc.lobby && ccc.name);
+                if (cccData.length === 0) throw new Error('No valid data in CCC.csv. Expected headers: "LOBBY", "L/H CC NAME", "MOBILE NO".');
+                console.log('Processed CCC.csv cccData:', cccData);
+            } catch (error) {
+                console.error('Error loading CCC.csv:', error);
+                document.getElementById('error').innerText = 'CCC.csv has invalid format or missing data. Expected headers: "LOBBY", "L/H CC NAME", "MOBILE NO".';
+                cccData = [
+                    { lobby: "BSP", name: "John Doe", mobile: "1234567890" },
+                    { lobby: "BSP", name: "Jane Smith", mobile: "0987654321" },
+                    { lobby: "RIG", name: "Amit Kumar", mobile: "9876543210" }
+                ];
+            }
+        }
+
+        function populateCccDropdown() {
+            const lobby = document.getElementById('lobby').value;
+            const cccSelect = document.getElementById('cccName');
+            cccSelect.innerHTML = '<option value="" disabled selected>Select L/H CC Name</option>';
+            const filteredCcc = cccData.filter(ccc => ccc.lobby === lobby);
+            filteredCcc.forEach(ccc => {
+                const option = document.createElement('option');
+                option.value = ccc.name;
+                option.text = ccc.name;
+                cccSelect.appendChild(option);
+            });
+            const otherOption = document.createElement('option');
+            otherOption.value = 'OTHER';
+            otherOption.text = 'OTHER';
+            cccSelect.appendChild(otherOption);
+        }
+
+        async function initGoogleAPI() {
+            if (!window.location.protocol.startsWith('https')) {
+                document.getElementById('error').innerText = 'Warning: Running on HTTP may cause authentication errors. Use HTTPS for best results.';
+            }
+
+            await loadCccData();
+            populateCccDropdown();
+
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+
+            const formatDate = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            document.getElementById('fromDate').value = formatDate(yesterday);
+            document.getElementById('toDate').value = formatDate(today);
+
+            gapi.load('client', () => {
+                gapi.client.init({
+                    apiKey: API_KEY,
+                    discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+                }).then(() => {
+                    tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: CLIENT_ID,
+                        scope: SCOPES,
+                        callback: (tokenResponse) => {
+                            if (tokenResponse.error) {
+                                document.getElementById('error').innerText = 'Authentication failed: ' + tokenResponse.error;
+                                return;
+                            }
+                            accessToken = tokenResponse.access_token;
+                            document.getElementById('loading').innerText = 'Authenticated successfully!';
+                            setTimeout(() => { document.getElementById('loading').innerText = ''; }, 2000);
+                        },
+                    });
+                    tokenClient.requestAccessToken();
+                }).catch((error) => {
+                    document.getElementById('error').innerText = 'Error initializing Google API: ' + error.message;
+                });
+            });
+        }
+
+        document.getElementById('lobby').addEventListener('change', function() {
+            populateCccDropdown();
+        });
+
+        document.getElementById('cccName').addEventListener('change', function() {
+            if (this.value === 'OTHER') {
+                const dialog = document.getElementById('cccDialog');
+                dialog.style.display = 'block';
+                document.getElementById('cccDialogOverlay').style.display = 'block';
+                console.log('CCC dialog opened:', {
+                    boundingRect: dialog.getBoundingClientRect(),
+                    windowSize: { width: window.innerWidth, height: window.innerHeight }
+                });
+            }
+        });
+
+        function closeCccDialog() {
+            const dialog = document.getElementById('cccDialog');
+            dialog.style.display = 'none';
+            document.getElementById('cccDialogOverlay').style.display = 'none';
+            document.getElementById('cccNameInput').value = '';
+            document.getElementById('cccMobileInput').value = '';
+            document.getElementById('cccName').value = '';
+            document.getElementById('error').innerText = '';
+            console.log('CCC dialog closed:', {
+                boundingRect: dialog.getBoundingClientRect(),
+                dropdownValue: document.getElementById('cccName').value
+            });
+        }
+
+        function submitCccDialog() {
+            const cccName = document.getElementById('cccNameInput').value.trim();
+            const cccMobile = document.getElementById('cccMobileInput').value.trim();
+            if (!cccName || !cccMobile) {
+                document.getElementById('error').innerText = 'Please enter both L/H CC Name and Mobile Number.';
+                return;
+            }
+            if (!/^\d{10}$/.test(cccMobile)) {
+                document.getElementById('error').innerText = 'Mobile Number must be exactly 10 digits.';
+                return;
+            }
+            customCcc = { name: cccName, mobile: cccMobile, lobby: document.getElementById('lobby').value };
+            const cccSelect = document.getElementById('cccName');
+            const existingOption = Array.from(cccSelect.options).find(opt => opt.value === cccName);
+            if (!existingOption) {
+                const option = document.createElement('option');
+                option.value = cccName;
+                option.text = cccName;
+                cccSelect.insertBefore(option, cccSelect.querySelector('option[value="OTHER"]'));
+            }
+            cccSelect.value = cccName;
+            document.getElementById('cccDialog').style.display = 'none';
+            document.getElementById('cccDialogOverlay').style.display = 'none';
+            document.getElementById('cccNameInput').value = '';
+            document.getElementById('cccMobileInput').value = '';
+            document.getElementById('error').innerText = '';
+            console.log('CCC dialog submitted:', { cccName, cccMobile, dropdownValue: cccSelect.value });
+        }
+
+        function getCccMobile(cccName) {
+            if (customCcc && cccName === customCcc.name) {
+                return customCcc.mobile;
+            }
+            const ccc = cccData.find(c => c.name === cccName && c.lobby === document.getElementById('lobby').value);
+            return ccc ? ccc.mobile : '';
+        }
+
+        function showTlcRemark(remark, tlcName, tlcMobile) {
+            const message = `TLC Remark: ${remark || 'No TLC Remark'}\nTLC Name: ${tlcName || 'N/A'}\nMobile Number: ${tlcMobile || 'N/A'}`;
+            alert(message);
+        }
+
+        function calculateDutyHours(signOnTime) {
+            if (!signOnTime) {
+                console.warn('Sign On Time is empty or undefined');
+                return 'N/A';
+            }
+            try {
+                const [datePart, timePart] = signOnTime.split(' ');
+                if (!datePart || !timePart) {
+                    console.warn(`Invalid Sign On Time format: ${signOnTime}`);
+                    return 'N/A';
+                }
+                const [day, month, year] = datePart.split('/').map(Number);
+                const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                if (isNaN(day) || isNaN(month) || isNaN(year) || isNaN(hours) || isNaN(minutes) || isNaN(seconds)) {
+                    console.warn(`Invalid date/time components in: ${signOnTime}`);
+                    return 'N/A';
+                }
+                const signOnDateTime = new Date(year, month - 1, day, hours, minutes, seconds);
+                if (isNaN(signOnDateTime.getTime())) {
+                    console.warn(`Invalid Date object created from: ${signOnTime}`);
+                    return 'N/A';
+                }
+                const now = new Date();
+                const diffMs = now - signOnDateTime;
+                const diffHours = diffMs / (1000 * 60 * 60);
+                console.log(`Calculating duty hours: Sign On=${signOnTime}, Now=${now.toISOString()}, Hours=${diffHours.toFixed(2)}`);
+                return diffHours >= 0 ? diffHours.toFixed(2) : 'N/A';
+            } catch (error) {
+                console.warn(`Error calculating duty hours: ${error.message}, Sign On=${signOnTime}`);
+                return 'N/A';
+            }
+        }
+
+        function showReport() {
+            const criteria = document.getElementById('criteria').value;
+            const lobby = document.getElementById('lobby').value;
+            const cccName = document.getElementById('cccName').value;
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+
+            if (!cccName) {
+                document.getElementById('error').innerText = 'Please select an L/H CC Name.';
+                return;
+            }
+            if (!fromDate || !toDate) {
+                document.getElementById('error').innerText = 'Please select both From Date and To Date.';
+                return;
+            }
+
+            if (!tokenClient) {
+                document.getElementById('error').innerText = 'Google API not initialized. Please wait and try again.';
+                setTimeout(showReport, 2000);
+                return;
+            }
+
+            if (!accessToken) {
+                document.getElementById('error').innerText = 'Not authenticated. Requesting access...';
+                tokenClient.requestAccessToken();
+                setTimeout(showReport, 3000);
+                return;
+            }
+
+            document.getElementById('loading').innerText = 'Fetching data...';
+            gapi.client.sheets.spreadsheets.values.get({
+                spreadsheetId: SPREADSHEET_ID,
+                range: `${SHEET_NAME}!A:BB`,
+            }).then((response) => {
+                document.getElementById('loading').innerText = '';
+                const values = response.result.values || [];
+                const thead = document.getElementById('tableHeader');
+                const tbody = document.getElementById('reportBody');
+                thead.innerHTML = '';
+                tbody.innerHTML = '';
+                document.getElementById('error').innerText = '';
+
+                let headerRow = document.createElement('tr');
+                if (criteria === 'OUR JURISDICTION') {
+                    headerRow.innerHTML = `
+                        <th class="our-jurisdiction">LP ID</th>
+                        <th class="our-jurisdiction">LP Name</th>
+                        <th class="our-jurisdiction">LP Mobile</th>
+                        <th class="our-jurisdiction">ALP Name</th>
+                        <th class="our-jurisdiction">Sign On Time</th>
+                        <th class="our-jurisdiction">Train No</th>
+                        <th class="our-jurisdiction">LOCO No</th>
+                        <th class="our-jurisdiction">Crew Timestamp</th>
+                        <th class="our-jurisdiction">TLC Timestamp</th>
+                        <th class="our-jurisdiction">Current Location</th>
+                        <th class="our-jurisdiction">Total Duty Hours</th>
+                        <th class="our-jurisdiction">CC L/H Remark</th>
+                        <th class="our-jurisdiction">Sign Off Time</th>
+                        <th class="our-jurisdiction">Sign Off Station</th>
+                        <th class="our-jurisdiction">Action</th>
+                    `;
+                } else {
+                    headerRow.innerHTML = `
+                        <th class="our-crew">LP ID</th>
+                        <th class="our-crew">LP Name</th>
+                        <th class="our-crew">LP Mobile</th>
+                        <th class="our-crew">ALP Name</th>
+                        <th class="our-crew">Sign On Time</th>
+                        <th class="our-crew">Train No</th>
+                        <th class="our-crew">LOCO No</th>
+                        <th class="our-crew">Crew Timestamp</th>
+                        <th class="our-crew">TLC Timestamp</th>
+                        <th class="our-crew">Current Location</th>
+                        <th class="our-crew">Assign Lobby</th>
+                        <th class="our-crew">Total Duty Hours</th>
+                        <th class="our-crew">CC L/H Remark</th>
+                        <th class="our-crew">Sign Off Time</th>
+                        <th class="our-crew">Sign Off Station</th>
+                        <th class="our-crew">Action</th>
+                    `;
+                }
+                thead.appendChild(headerRow);
+
+                const filteredData = values.filter((row, index) => {
+                    if (index === 0) return false;
+                    const signOffTime = row[22] || '';
+                    if (signOffTime) return false;
+                    const rowDate = row[6] ? (row[6].includes('/') ? row[6].split('/').reverse().join('-') : row[6]) : '';
+                    const dateMatch = (!fromDate || rowDate >= fromDate) && (!toDate || rowDate <= toDate);
+                    let criteriaMatch = false;
+                    if (criteria === 'OUR CREW') {
+                        const lpId = row[0] || '';
+                        const lpIdPrefix = lpId.match(/^[A-Z]+/)?.[0] || '';
+                        criteriaMatch = lpIdPrefix === lobby;
+                    } else if (criteria === 'OUR JURISDICTION') {
+                        const assignLobby = row[18] || '';
+                        criteriaMatch = assignLobby === lobby;
+                    }
+                    return dateMatch && criteriaMatch;
+                });
+
+                if (filteredData.length === 0) {
+                    document.getElementById('error').innerText = 'No data found for the selected criteria, lobby, and date range.';
+                }
+
+                filteredData.forEach((row, index) => {
+                    const rowIndex = values.indexOf(row) + 1;
+                    const tr = document.createElement('tr');
+                    tr.id = `row_${index}`;
+                    tr.setAttribute('data-ccc-timestamp', row[20] || '');
+                    const dutyHours = calculateDutyHours(row[7]);
+                    if (row[21]) {
+                        tr.classList.add('has-ccc-remark');
+                    }
+                    if (criteria === 'OUR JURISDICTION') {
+                        tr.innerHTML = `
+                            <td class="our-jurisdiction">${row[0] || ''}</td>
+                            <td class="our-jurisdiction">${row[1] || ''}</td>
+                            <td class="our-jurisdiction">${row[2] || ''}</td>
+                            <td class="our-jurisdiction">${row[4] || ''}</td>
+                            <td class="our-jurisdiction">${row[7] || ''}</td>
+                            <td class="our-jurisdiction">${row[9] || ''}</td>
+                            <td class="our-jurisdiction">${row[10] || ''}</td>
+                            <td class="our-jurisdiction">${row[13] || ''}</td>
+                            <td class="our-jurisdiction">
+                                ${row[16] || ''}
+                                <span class="yellow-star" onclick="showTlcRemark('${row[19]?.replace(/'/g, "\\'") || ''}', '${row[24]?.replace(/'/g, "\\'") || ''}', '${row[25]?.replace(/'/g, "\\'") || ''}')">★</span>
+                            </td>
+                            <td class="our-jurisdiction">${row[17] || ''}</td>
+                            <td class="our-jurisdiction">${dutyHours}</td>
+                            <td class="our-jurisdiction"><textarea id="cccRemark_${index}" placeholder="Enter CCC Remark" oninput="validateRow(${index}, '${criteria}')">${row[21] || ''}</textarea></td>
+                            <td class="our-jurisdiction"><input type="datetime-local" id="signOffTime_${index}" oninput="validateRow(${index}, '${criteria}')"></td>
+                            <td class="our-jurisdiction"><input type="text" id="signOffStation_${index}" placeholder="Enter Station" oninput="this.value = this.value.toUpperCase(); validateRow(${index}, '${criteria}')"></td>
+                            <td class="our-jurisdiction"><button id="submitButton_${index}" onclick="submitData(${rowIndex}, ${index}, '${criteria}')" disabled>Submit</button></td>
+                        `;
+                    } else {
+                        tr.innerHTML = `
+                            <td class="our-crew">${row[0] || ''}</td>
+                            <td class="our-crew">${row[1] || ''}</td>
+                            <td class="our-crew">${row[2] || ''}</td>
+                            <td class="our-crew">${row[4] || ''}</td>
+                            <td class="our-crew">${row[7] || ''}</td>
+                            <td class="our-crew">${row[9] || ''}</td>
+                            <td class="our-crew">${row[10] || ''}</td>
+                            <td class="our-crew">${row[13] || ''}</td>
+                            <td class="our-crew">
+                                ${row[16] || ''}
+                                <span class="yellow-star" onclick="showTlcRemark('${row[19]?.replace(/'/g, "\\'") || ''}', '${row[24]?.replace(/'/g, "\\'") || ''}', '${row[25]?.replace(/'/g, "\\'") || ''}')">★</span>
+                            </td>
+                            <td class="our-crew">${row[17] || ''}</td>
+                            <td class="our-crew">${row[18] || ''}</td>
+                            <td class="our-crew">${dutyHours}</td>
+                            <td class="our-crew"><textarea id="cccRemark_${index}" placeholder="Enter CCC Remark" oninput="validateRow(${index}, '${criteria}')">${row[21] || ''}</textarea></td>
+                            <td class="our-crew"><input type="datetime-local" id="signOffTime_${index}" oninput="validateRow(${index}, '${criteria}')"></td>
+                            <td class="our-crew"><input type="text" id="signOffStation_${index}" placeholder="Enter Station" oninput="this.value = this.value.toUpperCase(); validateRow(${index}, '${criteria}')"></td>
+                            <td class="our-crew"><button id="submitButton_${index}" onclick="submitData(${rowIndex}, ${index}, '${criteria}')" disabled>Submit</button></td>
+                        `;
+                    }
+                    tbody.appendChild(tr);
+                    validateRow(index, criteria);
+                });
+            }).catch((error) => {
+                document.getElementById('loading').innerText = '';
+                document.getElementById('error').innerText = `Error fetching data: ${error.result?.error?.message || error.message}`;
+                if (error.status === 400) {
+                    document.getElementById('error').innerText += ' (Check if the sheet name "input" exists and has data in range A:BB)';
+                } else if (error.status === 401 || error.status === 403) {
+                    document.getElementById('error').innerText += ' (Invalid or expired token. Re-authenticating...)';
+                    tokenClient.requestAccessToken();
+                    setTimeout(showReport, 3000);
+                }
+            });
+        }
+
+        function validateRow(index, criteria) {
+            const cccRemark = document.getElementById(`cccRemark_${index}`).value.trim();
+            const signOffTime = document.getElementById(`signOffTime_${index}`).value;
+            const signOffStation = document.getElementById(`signOffStation_${index}`).value.trim().toUpperCase();
+            const submitButton = document.getElementById(`submitButton_${index}`);
+
+            if (criteria === 'OUR JURISDICTION') {
+                const hasSignOffTime = !!signOffTime;
+                const hasSignOffStation = !!signOffStation;
+                if (hasSignOffTime || hasSignOffStation) {
+                    submitButton.disabled = !(cccRemark && hasSignOffTime && hasSignOffStation);
+                } else {
+                    submitButton.disabled = !cccRemark;
+                }
+            } else {
+                submitButton.disabled = !(cccRemark && signOffTime && signOffStation);
+            }
+        }
+
+        function submitData(rowIndex, index, criteria) {
+            if (!tokenClient) {
+                document.getElementById('error').innerText = 'Google API not initialized. Please wait and try again.';
+                setTimeout(() => submitData(rowIndex, index, criteria), 2000);
+                return;
+            }
+
+            if (!accessToken) {
+                document.getElementById('error').innerText = 'Not authenticated. Requesting access...';
+                tokenClient.requestAccessToken();
+                setTimeout(() => submitData(rowIndex, index, criteria), 3000);
+                return;
+            }
+
+            const cccRemark = document.getElementById(`cccRemark_${index}`).value.trim();
+            let signOffTimeInput = document.getElementById(`signOffTime_${index}`).value;
+            let signOffStation = document.getElementById(`signOffStation_${index}`).value.trim().toUpperCase();
+            let signOffTime = '';
+            const cccName = document.getElementById('cccName').value;
+            const cccMobile = getCccMobile(cccName);
+
+            if (!cccRemark) {
+                document.getElementById('error').innerText = 'Please fill CCC Remark.';
+                return;
+            }
+
+            if (signOffTimeInput) {
+                const date = new Date(signOffTimeInput);
+                if (isNaN(date.getTime())) {
+                    document.getElementById('error').innerText = 'Invalid Sign Off Time format. Please use a valid date and time.';
+                    return;
+                }
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                const seconds = date.getSeconds().toString().padStart(2, '0');
+                signOffTime = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+            }
+
+            try {
+                const row = document.getElementById(`row_${index}`);
+                let cccTimestamp = row.getAttribute('data-ccc-timestamp') || '';
+
+                if (!cccTimestamp) {
+                    const now = new Date();
+                    const istOptions = { timeZone: 'Asia/Kolkata' };
+                    const day = now.getDate().toString().padStart(2, '0');
+                    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+                    const year = now.getFullYear();
+                    const hours = now.getHours().toString().padStart(2, '0');
+                    const minutes = now.getMinutes().toString().padStart(2, '0');
+                    const seconds = now.getSeconds().toString().padStart(2, '0');
+                    cccTimestamp = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+                }
+
+                document.getElementById('loading').innerText = 'Updating data...';
+                gapi.client.sheets.spreadsheets.values.batchUpdate({
+                    spreadsheetId: SPREADSHEET_ID,
+                    resource: {
+                        valueInputOption: 'RAW',
+                        data: [
+                            {
+                                range: `${SHEET_NAME}!U${rowIndex}:X${rowIndex}`,
+                                values: [[cccTimestamp, cccRemark, signOffTime, signOffStation]]
+                            },
+                            {
+                                range: `${SHEET_NAME}!AA${rowIndex}:BB${rowIndex}`,
+                                values: [[cccName, cccMobile]]
+                            }
+                        ]
+                    }
+                }).then(() => {
+                    document.getElementById('loading').innerText = '';
+                    alert('Data updated successfully!');
+                    row.setAttribute('data-ccc-timestamp', cccTimestamp);
+                    if (criteria === 'OUR JURISDICTION' && (!signOffTime || !signOffStation)) {
+                        row.classList.add('partial-submit');
+                    } else {
+                        if (row) {
+                            row.remove();
+                        }
+                    }
+                }).catch((error) => {
+                    document.getElementById('loading').innerText = '';
+                    document.getElementById('error').innerText = `Error updating data: ${error.result?.error?.message || error.message}`;
+                    if (error.status === 401 || error.status === 403) {
+                        document.getElementById('error').innerText += ' (Invalid or expired token. Re-authenticating...)';
+                        tokenClient.requestAccessToken();
+                        setTimeout(() => submitData(rowIndex, index, criteria), 3000);
+                    }
+                });
+            } catch (error) {
+                document.getElementById('loading').innerText = '';
+                document.getElementById('error').innerText = `Error formatting timestamp: ${error.message}`;
+            }
+        }
+
+        window.onload = initGoogleAPI;
+    </script>
+</body>
+</html>

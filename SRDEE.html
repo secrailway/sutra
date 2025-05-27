@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Railway Crew Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #f3f4f6;
+            color: #111827;
+            line-height: 1.5;
+            padding: 12px;
+        }
+        .form-container {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            margin: 0 0 12px;
+            background: #ffffff;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+            align-items: end;
+        }
+        .form-container label {
+            font-weight: 500;
+            font-size: 11px;
+            color: #1f2937;
+            margin-bottom: 3px;
+            display: block;
+        }
+        .form-container select,
+        .form-container input[type="date"] {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            font-size: 11px;
+            background: #ffffff;
+            color: #111827;
+        }
+        .form-container select:focus,
+        .form-container input[type="date"]:focus {
+            border-color: #1e3a8a;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.15);
+        }
+        .form-container button {
+            padding: 6px 16px;
+            background-color: #1e3a8a;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .form-container button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .loader {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #4b5563;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            color: #dc2626;
+            font-size: 11px;
+            margin: 6px auto;
+            max-width: 100%;
+            text-align: center;
+        }
+        .table-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            overflow-x: auto;
+            max-height: 70vh; /* Changed to relative unit (70% of viewport height) */
+            overflow-y: auto;
+            background: #ffffff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+            border: 1px solid #000000;
+            border-radius: 4px;
+            font-size: 10.5px;
+        }
+        th, td {
+            padding: 5px 6px;
+            text-align: left;
+            border: 1px solid #000000;
+            vertical-align: top;
+            white-space: normal;
+            word-wrap: break-word;
+            max-height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        th:nth-child(-n+10), td:nth-child(-n+10) {
+            text-align: center;
+        }
+        th {
+            background-color: #063473;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 11px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            text-transform: uppercase;
+        }
+        td {
+            background-color: #ffffff;
+            color: #1f2937;
+        }
+        tr:nth-child(even) td {
+            background-color: #f9fafb;
+        }
+        .duty-less-9 td {
+            background-color: #ffffff !important;
+            color: #1f2937 !important;
+        }
+        .duty-9-12 td {
+            background-color: #fef08a !important;
+            color: #00060e !important;
+        }
+        .duty-over-12 td {
+            background-color: #f54141 !important;
+            color: #ffffff !important;
+        }
+        th:nth-child(1), td:nth-child(1) { width: 6%; }
+        th:nth-child(2), td:nth-child(2) { width: 8%; }
+        th:nth-child(3), td:nth-child(3) { width: 6%; }
+        th:nth-child(4), td:nth-child(4) { width: 8%; }
+        th:nth-child(5), td:nth-child(5) { width: 8%; }
+        th:nth-child(6), td:nth-child(6) { width: 7%; }
+        th:nth-child(7), td:nth-child(7) { width: 5%; }
+        th:nth-child(8), td:nth-child(8) { width: 5%; }
+        th:nth-child(9), td:nth-child(9) { width: 6%; }
+        th:nth-child(10), td:nth-child(10) { width: 7%; }
+        th:nth-child(11), td:nth-child(11) { width: 8%; }
+        th:nth-child(12), td:nth-child(12) { width: 6%; }
+        th:nth-child(13), td:nth-child(13) { width: 6%; }
+        th:nth-child(14), td:nth-child(14) { width: 8%; }
+        th:nth-child(15), td:nth-child(15) { width: 8%; }
+        th:nth-child(16), td:nth-child(16) { width: 8%; }
+        .dot {
+            cursor: pointer;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+        #reportContainer {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem; /* Relative unit */
+            }
+            .form-container {
+                grid-template-columns: 1fr;
+                margin: 0 0 0.5rem;
+                padding: 0.5rem;
+            }
+            .form-container button {
+                width: 100%;
+            }
+            th, td {
+                font-size: 0.55rem; /* Relative unit */
+                padding: 0.25rem 0.3rem;
+            }
+            .form-container select,
+            .form-container input[type="date"],
+            .form-container button {
+                font-size: 0.55rem;
+                padding: 0.3rem 0.4rem;
+            }
+            .dot {
+                width: 7px;
+                height: 7px;
+            }
+            th:nth-child(15), td:nth-child(15) { width: 10%; }
+            th:nth-child(16), td:nth-child(16) { width: 10%; }
+            #reportContainer {
+                padding: 0.5rem;
+            }
+        }
+        @media (max-width: 480px) {
+            body {
+                padding: 0.25rem;
+            }
+            .form-container {
+                padding: 0.4rem;
+            }
+            th:nth-child(14), td:nth-child(14) { width: 10%; }
+            th:nth-child(15), td:nth-child(15) { width: 10%; }
+            th:nth-child(16), td:nth-child(16) { width: 10%; }
+            th:nth-child(2), td:nth-child(2), th:nth-child(4), td:nth-child(4) { width: 9%; }
+            th, td {
+                font-size: 0.5rem;
+                padding: 0.2rem 0.25rem;
+            }
+            #reportContainer {
+                padding: 0.25rem;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-4">LONG HOURS MONITORING</h1>
+        <div class="form-container shadow-lg rounded-lg">
+            <form id="reportForm" class="p-4">
+                <div class="error" id="error"></div>
+                <div class="form-container">
+                    <div>
+                        <label for="section" class="block text-xs font-medium text-gray-700">Section</label>
+                        <select id="section" name="section" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-[11px] p-1.5">
+                            <option value="ALL">ALL</option>
+                            <option value="BSP-CPH-DIPKA">BSP-CPH-DIPKA</option>
+                            <option value="SGRD-RIG-JSG">SGRD-RIG-JSG</option>
+                            <option value="CIC">CIC</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="fromDate" class="block text-xs font-medium text-gray-700">From Date</label>
+                        <input type="date" id="fromDate" name="fromDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-[11px] p-1.5">
+                    </div>
+                    <div>
+                        <label for="toDate" class="block text-xs font-medium text-gray-700">To Date</label>
+                        <input type="date" id="toDate" name="toDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-[11px] p-1.5">
+                    </div>
+                    <div>
+                        <label for="filter" class="block text-xs font-medium text-gray-700">Filter</label>
+                        <select id="filter" name="filter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-[11px] p-1.5">
+                            <option value="all">Show All</option>
+                            <option value="9-12">Show 9–12 Hrs Duty</option>
+                            <option value="over-12">Show More than 12 Hrs Duty</option>
+                            <option value="signoff">Show Sign Off Data Only</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button type="submit" id="submitButton" class="inline-flex items-center px-3 py-1.5 bg-indigo-600 border border-transparent rounded-md font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-[11px]">
+                            Show Report
+                            <span id="loader" class="loader hidden"></span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div id="reportContainer" class="mt-4 bg-white shadow-lg rounded-lg p-4 hidden">
+            <h2 class="text-xl font-semibold text-gray-800 mb-3">Crew Report</h2>
+            <div class="table-container">
+                <table id="reportTable" class="min-w-full">
+                    <thead id="tableHeader"></thead>
+                    <tbody id="reportTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'AIzaSyBf3C_Ly8bIF_f-t30wE2e7cMsc2hz0co0';
+        const SPREADSHEET_ID = '1Eob3yiujIi0sNtsPQr_HCvQtlybXnq6K11bm1wAcqAo';
+        const SHEET_NAME = 'input';
+
+        async function fetchSheetData(section, fromDate, toDate, filter) {
+            const range = `${SHEET_NAME}!A:AB`;
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}?key=${API_KEY}`;
+            const loader = document.getElementById('loader');
+            const timeout = 10000;
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (!response.ok) throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+                const data = await response.json();
+                if (!data.values) {
+                    console.error('No data found in sheet');
+                    document.getElementById('error').innerText = 'No data found in the sheet.';
+                    loader.classList.add('hidden');
+                    console.log('Loader: hidden (no data)');
+                    return [];
+                }
+
+                const headers = data.values[0];
+                const rows = data.values.slice(1);
+                const filteredRows = rows.filter(row => {
+                    const signOffStation = row[23] || '';
+                    const sectionValue = row[12] || '';
+                    const signOnTime = row[7] || '';
+                    let rowDate = '';
+                    if (signOnTime) {
+                        try {
+                            const datePart = signOnTime.split(' ')[0];
+                            const [day, month, year] = datePart.split('/');
+                            rowDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                        } catch (e) {
+                            console.warn(`Invalid Sign On Time format for row: ${signOnTime}`);
+                        }
+                    }
+                    const sectionMatch = section === 'ALL' || !section || sectionValue === section;
+                    const dateMatch = (!fromDate || !toDate || (rowDate >= fromDate && rowDate <= toDate));
+                    const signOffMatch = filter === 'signoff' ? signOffStation : filter !== 'signoff' ? !signOffStation : true;
+                    return sectionMatch && dateMatch && signOffMatch;
+                });
+                console.log(`Fetched rows for section ${section}, filter ${filter}, count: ${filteredRows.length}`);
+                return filteredRows.map(row => ({
+                    lpId: row[0] || '',
+                    lpName: row[1] || '',
+                    lpMobile: row[2] || '',
+                    alpName: row[4] || '',
+                    signOnTime: row[7] || '',
+                    crewEntryTime: row[13] || '',
+                    trainNo: row[9] || '',
+                    locoNo: row[10] || '',
+                    lastPassedStation: row[11] || '',
+                    tlcTimestamp: row[16] || '',
+                    currentLocation: row[17] || '',
+                    assignLobby: row[18] || '',
+                    cccTimestamp: row[20] || '',
+                    tlcRemark: row[19] || '',
+                    cccRemark: row[21] || '',
+                    signOffTime: row[22] || '',
+                    signOffStation: row[23] || '',
+                    tlcName: row[24] || '',
+                    tlcMobile: row[25] || '',
+                    ccName: row[26] || '',
+                    ccMobile: row[27] || ''
+                }));
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('error').innerText = `Error fetching data: ${error.message}`;
+                loader.classList.add('hidden');
+                console.log('Loader: hidden (fetch error)');
+                return [];
+            }
+        }
+
+        function calculateTotalDutyHours(startTime, endTime) {
+            if (!startTime) {
+                console.warn(`Start Time is empty: ${startTime}`);
+                return 0;
+            }
+            try {
+                const parseDateTime = (dateTime) => {
+                    const [datePart, timePart] = dateTime.split(' ');
+                    if (!datePart || !timePart) throw new Error('Invalid format: Missing date or time');
+                    const [day, month, year] = datePart.split('/').map(Number);
+                    const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                    if (isNaN(day) || isNaN(month) || isNaN(year) || isNaN(hours) || isNaN(minutes) || isNaN(seconds)) {
+                        throw new Error(`Invalid components: ${dateTime}`);
+                    }
+                    const date = new Date(year, month - 1, day, hours, minutes, seconds);
+                    if (isNaN(date.getTime())) throw new Error(`Invalid Date object: ${dateTime}`);
+                    return date;
+                };
+
+                const startDateTime = parseDateTime(startTime);
+                const endDateTime = endTime ? parseDateTime(endTime) : new Date();
+                const diffMs = endDateTime - startDateTime;
+                const diffHours = diffMs / (1000 * 60 * 60);
+                console.log(`Calculating total duty hours: Start=${startTime}, End=${endTime || 'Now'}, Hours=${diffHours.toFixed(2)}`);
+                return diffHours > 0 ? diffHours : 0;
+            } catch (error) {
+                console.warn(`Error calculating total duty hours: ${error.message}, Start=${startTime}, End=${endTime}`);
+                return 0;
+            }
+        }
+
+        function formatHoursToHHMM(hours) {
+            if (hours <= 0) return '00:00';
+            let hrs = Math.floor(hours);
+            let mins = Math.round((hours - hrs) * 60);
+            if (mins === 60) {
+                hrs += 1;
+                mins = 0;
+            }
+            return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+        }
+
+        function getDutyHoursClass(dutyHours) {
+            if (dutyHours < 9) {
+                return 'duty-less-9';
+            } else if (dutyHours >= 9 && dutyHours < 12) {
+                return 'duty-9-12';
+            } else {
+                return 'duty-over-12';
+            }
+        }
+
+        function showBlackDotDetails(row) {
+            const message = `TLC Remark: ${row.tlcRemark || 'No TLC Remark'}\n` +
+                           `TLC NAME: ${row.tlcName || 'N/A'}\n` +
+                           `TLC MOBILE NO: ${row.tlcMobile || 'N/A'}\n` +
+                           `CC L/H Remark: ${row.cccRemark || 'No CCC Remark'}\n` +
+                           `CC L/H NAME: ${row.ccName || 'N/A'}\n` +
+                           `CC L/H MOBILE NO: ${row.ccMobile || 'N/A'}`;
+            alert(message);
+        }
+
+        function showYellowDotDetails(row) {
+            let message = `CREW DUTY ANALYSIS\n\n`;
+            
+            message += `Sign On Time: ${row.signOnTime || 'N/A'}\n`;
+            
+            let crewEntryDiffFromDuty = 'N/A';
+            if (row.signOnTime && row.crewEntryTime) {
+                const diff = calculateTotalDutyHours(row.signOnTime, row.crewEntryTime);
+                crewEntryDiffFromDuty = formatHoursToHHMM(diff);
+            }
+            message += `Crew Entry Time: ${row.crewEntryTime || 'N/A'} (After ${crewEntryDiffFromDuty} hrs from duty)\n`;
+
+            let tlcRemarkDiffFromDuty = 'N/A';
+            let tlcRemarkDiffFromCrewEntry = 'N/A';
+            if (row.signOnTime && row.tlcTimestamp) {
+                const diff = calculateTotalDutyHours(row.signOnTime, row.tlcTimestamp);
+                tlcRemarkDiffFromDuty = formatHoursToHHMM(diff);
+            }
+            if (row.crewEntryTime && row.tlcTimestamp) {
+                const diff = calculateTotalDutyHours(row.crewEntryTime, row.tlcTimestamp);
+                tlcRemarkDiffFromCrewEntry = formatHoursToHHMM(diff);
+            }
+            message += `TLC Remark Time: ${row.tlcTimestamp || 'N/A'} (After ${tlcRemarkDiffFromDuty} hrs from duty, After ${tlcRemarkDiffFromCrewEntry} hrs from Crew Entry Time)\n`;
+
+            let signOffEntryDiffFromDuty = 'N/A';
+            let signOffEntryDiffFromTlcRemark = 'N/A';
+            if (row.signOnTime && row.tlcTimestamp) {
+                const diff = calculateTotalDutyHours(row.signOnTime, row.tlcTimestamp);
+                signOffEntryDiffFromDuty = formatHoursToHHMM(diff);
+            }
+            if (row.tlcTimestamp && row.tlcTimestamp) {
+                const diff = calculateTotalDutyHours(row.tlcTimestamp, row.tlcTimestamp);
+                signOffEntryDiffFromTlcRemark = formatHoursToHHMM(diff);
+            }
+            message += `Sign Off Entry Time: ${row.tlcTimestamp || 'N/A'} (After ${signOffEntryDiffFromDuty} hrs from duty, After ${signOffEntryDiffFromTlcRemark} hrs from TLC Remark Time)\n`;
+
+            let cccRemarkDiffFromDuty = 'N/A';
+            let cccRemarkDiffFromTlcRemark = 'N/A';
+            if (row.signOnTime && row.cccTimestamp) {
+                const diff = calculateTotalDutyHours(row.signOnTime, row.cccTimestamp);
+                cccRemarkDiffFromDuty = formatHoursToHHMM(diff);
+            }
+            if (row.tlcTimestamp && row.cccTimestamp) {
+                const diff = calculateTotalDutyHours(row.tlcTimestamp, row.cccTimestamp);
+                cccRemarkDiffFromTlcRemark = formatHoursToHHMM(diff);
+            }
+            message += `CCC Remark Time: ${row.cccTimestamp || 'N/A'} (After ${cccRemarkDiffFromDuty} hrs of duty, After ${cccRemarkDiffFromTlcRemark} hrs of TLC Remark Time)\n`;
+
+            let signOffDiffFromDuty = 'N/A';
+            if (row.signOnTime && row.signOffTime) {
+                const diff = calculateTotalDutyHours(row.signOnTime, row.signOffTime);
+                signOffDiffFromDuty = formatHoursToHHMM(diff);
+            }
+            message += `Sign Off Time: ${row.signOffTime || 'N/A'} (After ${signOffDiffFromDuty} hrs of duty)`;
+
+            alert(message);
+        }
+
+        function renderTable(data, filter) {
+            const tableHeader = document.getElementById('tableHeader');
+            const tableBody = document.getElementById('reportTableBody');
+            const loader = document.getElementById('loader');
+            tableHeader.innerHTML = '';
+            tableBody.innerHTML = '';
+
+            try {
+                const headerRow = document.createElement('tr');
+                const baseHeaders = [
+                    'LP ID', 'LP Name', 'LP Mobile', 'ALP Name', 'Sign On Time', 'Crew Entry Time',
+                    'Train No', 'Loco No', 'Last Passed Station', 'Total Duty Hours', 'TLC Timestamp',
+                    'Current Location', 'Assign Lobby', 'CCC Timestamp', 'Remarks'
+                ];
+                const headers = filter === 'signoff' ? [...baseHeaders, 'Sign Off Time and Station'] : baseHeaders;
+                headers.forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    headerRow.appendChild(th);
+                });
+                tableHeader.appendChild(headerRow);
+
+                let filteredData = data;
+                if (filter === '9-12') {
+                    filteredData = data.filter(row => {
+                        const dutyHours = calculateTotalDutyHours(row.signOnTime, row.signOffTime);
+                        return dutyHours >= 9 && dutyHours < 12;
+                    });
+                } else if (filter === 'over-12') {
+                    filteredData = data.filter(row => {
+                        const dutyHours = calculateTotalDutyHours(row.signOnTime, row.signOffTime);
+                        return dutyHours > 12;
+                    });
+                }
+
+                if (filteredData.length === 0) {
+                    console.warn('No data to display after filtering');
+                    tableBody.innerHTML = `<tr><td colspan="${headers.length}" class="px-3 py-2 text-center text-sm text-gray-500">No records found</td></tr>`;
+                } else {
+                    filteredData.forEach(row => {
+                        const tr = document.createElement('tr');
+                        const totalDutyHours = calculateTotalDutyHours(row.signOnTime, row.signOffTime);
+                        const className = getDutyHoursClass(totalDutyHours);
+                        tr.classList.add(className);
+                        console.log(`Row: LP ID=${row.lpId}, Duty Hours=${formatHoursToHHMM(totalDutyHours)} (${totalDutyHours.toFixed(2)} hrs), Class=${className}`);
+                        const signOffCombined = filter === 'signoff' && row.signOffTime && row.signOffStation ? `${row.signOffTime} - ${row.signOffStation}` : '';
+                        tr.innerHTML = `
+                            <td>${row.lpId}</td>
+                            <td>${row.lpName}</td>
+                            <td>${row.lpMobile}</td>
+                            <td>${row.alpName}</td>
+                            <td>${row.signOnTime}</td>
+                            <td>${row.crewEntryTime}</td>
+                            <td>${row.trainNo}</td>
+                            <td>${row.locoNo}</td>
+                            <td>${row.lastPassedStation}</td>
+                            <td>${formatHoursToHHMM(totalDutyHours)}</td>
+                            <td>${row.tlcTimestamp}</td>
+                            <td>${row.currentLocation}</td>
+                            <td>${row.assignLobby}</td>
+                            <td>${row.cccTimestamp}</td>
+                            <td>
+                                <span class="dot bg-black tlc-dot"></span>
+                                <span class="dot bg-yellow-400 ccc-dot"></span>
+                            </td>
+                            ${filter === 'signoff' ? `<td>${signOffCombined}</td>` : ''}
+                        `;
+                        tableBody.appendChild(tr);
+                        tr.querySelector('.tlc-dot').addEventListener('click', () => showBlackDotDetails(row));
+                        tr.querySelector('.ccc-dot').addEventListener('click', () => showYellowDotDetails(row));
+                    });
+                }
+            } catch (error) {
+                console.error('Error rendering table:', error);
+                document.getElementById('error').innerText = `Error rendering table: ${error.message}`;
+            } finally {
+                loader.classList.add('hidden');
+                console.log('Loader: hidden (renderTable complete)');
+            }
+        }
+
+        async function loadDefaultData() {
+            const now = new Date();
+            const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+            const toDate = now.toISOString().split('T')[0];
+            const fromDate = yesterday.toISOString().split('T')[0];
+
+            document.getElementById('fromDate').value = fromDate;
+            document.getElementById('toDate').value = toDate;
+            document.getElementById('section').value = 'ALL';
+            document.getElementById('filter').value = 'all';
+
+            const submitButton = document.getElementById('submitButton');
+            const loader = document.getElementById('loader');
+            const tableBody = document.getElementById('reportTableBody');
+
+            try {
+                loader.classList.remove('hidden');
+                submitButton.disabled = true;
+                submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                console.log('Loader: shown (loadDefaultData start)');
+                tableBody.innerHTML = '<tr><td colspan="15" class="px-3 py-2 text-center text-sm text-gray-500">Loading...</td></tr>';
+
+                const data = await fetchSheetData('ALL', fromDate, toDate, 'all');
+                renderTable(data, 'all');
+            } catch (error) {
+                console.error('Error loading default data:', error);
+                document.getElementById('error').innerText = `Error loading data: ${error.message}`;
+            } finally {
+                loader.classList.add('hidden');
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                console.log('Loader: hidden (loadDefaultData complete)');
+                document.getElementById('reportContainer').classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('reportForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitButton = document.getElementById('submitButton');
+            const loader = document.getElementById('loader');
+            const tableBody = document.getElementById('reportTableBody');
+            const errorDiv = document.getElementById('error');
+
+            if (!document.getElementById('fromDate').value || !document.getElementById('toDate').value) {
+                errorDiv.innerText = 'Please select both From Date and To Date.';
+                loader.classList.add('hidden');
+                console.log('Loader: hidden (validation error)');
+                return;
+            }
+
+            try {
+                loader.classList.remove('hidden');
+                submitButton.disabled = true;
+                submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                console.log('Loader: shown (form submit)');
+                tableBody.innerHTML = '<tr><td colspan="16" class="px-3 py-2 text-center text-sm text-gray-500">Loading...</td></tr>';
+                errorDiv.innerText = '';
+
+                const section = document.getElementById('section').value;
+                const fromDate = document.getElementById('fromDate').value;
+                const toDate = document.getElementById('toDate').value;
+                const filter = document.getElementById('filter').value;
+
+                const data = await fetchSheetData(section, fromDate, toDate, filter);
+                renderTable(data, filter);
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                errorDiv.innerText = `Error submitting form: ${error.message}`;
+            } finally {
+                loader.classList.add('hidden');
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                console.log('Loader: hidden (form submit complete)');
+                document.getElementById('reportContainer').classList.remove('hidden');
+            }
+        });
+
+        window.onload = loadDefaultData;
+    </script>
+</body>
+</html>
