@@ -26,8 +26,8 @@
             alert('Unauthorized access. Please login first.');
             localStorage.removeItem('tlcToken');
             window.location.href = 'tlc_cc_login.html';
-        }
-    </script>
+        }
+       </script>
     <style>
         * {
             margin: 0;
@@ -387,11 +387,18 @@
         <select id="tlcName">
             <option value="" disabled selected>Select TLC Name</option>
         </select>
+        <label for="shift">Shift:</label>
+        <select id="shift">
+            <option value="" disabled selected>Select Shift</option>
+            <option value="P1 (01:00 to 09:00)">P1 (01:00 to 09:00)</option>
+            <option value="P2 (09:00 to 17:00)">P2 (09:00 to 17:00)</option>
+            <option value="P3 (17:00 to 01:00)">P3 (17:00 to 01:00)</option>
+        </select>
         <label for="fromDate">From Date:</label>
         <input type="date" id="fromDate">
         <label for="toDate">To Date:</label>
         <input type="date" id="toDate">
-        <button onclick="showReport()">Show Report</button>
+        <button onclick="showReport(true)">Show Report</button>
     </div>
     <div id="error" class="error"></div>
     <div id="loading" class="loading"></div>
@@ -430,7 +437,9 @@
         const CLIENT_ID = '547073147985-ap3u2ed867imq6q810gjc82jfsme6tqm.apps.googleusercontent.com';
         const API_KEY = 'AIzaSyBf3C_Ly8bIF_f-t30wE2e7cMsc2hz0co0';
         const SPREADSHEET_ID = '1Eob3yiujIi0sNtsPQr_HCvQtlybXnq6K11bm1wAcqAo';
+        const TLC_LOG_SPREADSHEET_ID = '1IqZReufdD1EL6B8m7S5O2oJGBwXN8NnG5X1-slj4pLk';
         const SHEET_NAME = 'input';
+        const TLC_LOG_SHEET_NAME = 'Sheet1';
         const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
         let tokenClient;
@@ -441,6 +450,7 @@
             { name: "Amit Kumar", mobile: "9876543210" }
         ];
         let customTlc = null;
+        let autoRefreshInterval = null;
 
         async function loadTlcData() {
             try {
@@ -603,6 +613,63 @@
             return tlc ? tlc.mobile : '';
         }
 
+        async function logTlcEntry(section, tlcName, shift) {
+            if (!accessToken) {
+                document.getElementById('error').innerText = 'Not authenticated for TLC log. Requesting access...';
+                tokenClient.requestAccessToken();
+                return false;
+            }
+
+            const tlcMobile = getTlcMobile(tlcName);
+            if (!tlcMobile) {
+                document.getElementById('error').innerText = 'TLC Mobile Number not found for selected TLC Name.';
+                return false;
+            }
+
+            try {
+                const now = new Date();
+                const timestamp = now.toLocaleString('en-IN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                }).replace(/,/, '').replace(/(\d+)\/(\d+)\/(\d+)/, '$1/$2/$3');
+
+                document.getElementById('loading').innerText = 'Logging TLC entry...';
+                const response = await gapi.client.sheets.spreadsheets.values.append({
+                    spreadsheetId: TLC_LOG_SPREADSHEET_ID,
+                    range: `${TLC_LOG_SHEET_NAME}!A:F`,
+                    valueInputOption: 'RAW',
+                    insertDataOption: 'INSERT_ROWS',
+                    resource: {
+                        values: [[
+                            'TLC',
+                            timestamp,
+                            tlcName,
+                            tlcMobile,
+                            section,
+                            shift
+                        ]]
+                    }
+                });
+                console.log('TLC entry logged:', response);
+                document.getElementById('loading').innerText = '';
+                return true;
+            } catch (error) {
+                document.getElementById('loading').innerText = '';
+                document.getElementById('error').innerText = `Error logging TLC entry: ${error.result?.error?.message || error.message}`;
+                if (error.status === 401 || error.status === 403) {
+                    document.getElementById('error').innerText += ' (Invalid or expired token. Re-authenticating...)';
+                    tokenClient.requestAccessToken();
+                }
+                console.error('logTlcEntry error:', error);
+                return false;
+            }
+        }
+
         function calculateDutyHours(signOnTime, currentTime) {
             if (!signOnTime) return '';
             try {
@@ -629,14 +696,19 @@
             }
         }
 
-        function showReport() {
+        async function showReport(isManualClick = false) {
             const section = document.getElementById('section').value;
             const tlcName = document.getElementById('tlcName').value;
+            const shift = document.getElementById('shift').value;
             const fromDate = document.getElementById('fromDate').value;
             const toDate = document.getElementById('toDate').value;
 
             if (!tlcName) {
                 document.getElementById('error').innerText = 'Please select a TLC Name.';
+                return;
+            }
+            if (!shift) {
+                document.getElementById('error').innerText = 'Please select a Shift.';
                 return;
             }
             if (!fromDate || !toDate) {
@@ -646,16 +718,47 @@
 
             if (!tokenClient) {
                 document.getElementById('error').innerText = 'Google API not initialized. Please wait and try again.';
-                setTimeout(showReport, 2000);
+                setTimeout(() => showReport(isManualClick), 2000);
                 return;
             }
 
             if (!accessToken) {
                 document.getElementById('error').innerText = 'Not authenticated. Requesting access...';
                 tokenClient.requestAccessToken();
-                setTimeout(showReport, 3000);
+                setTimeout(() => showReport(isManualClick), 3000);
                 return;
             }
+
+            // Log TLC entry only on manual click
+            if (isManualClick) {
+                const logSuccess = await logTlcEntry(section, tlcName, shift);
+                if (!logSuccess) {
+                    document.getElementById('error').innerText += ' Failed to log TLC entry. Continuing with report...';
+                }
+            }
+
+            // Clear any existing auto-refresh interval
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                console.log('Cleared existing auto-refresh interval');
+            }
+
+            // Start auto-refresh every 30 seconds
+            autoRefreshInterval = setInterval(() => showReport(false), 30000);
+            console.log('Started auto-refresh interval');
+
+            // Store current input values to preserve them during refresh
+            const tbody = document.getElementById('reportBody');
+            const userInputs = [];
+            Array.from(tbody.getElementsByTagName('tr')).forEach((row, index) => {
+                const currentLocation = document.getElementById(`currentLocation_${index}`)?.value.trim() || '';
+                const assignLobby = document.getElementById(`assignLobby_${index}`)?.value || '';
+                const tlcRemark = document.getElementById(`tlcRemark_${index}`)?.value.trim() || '';
+                const lpId = row.cells[0]?.textContent || '';
+                userInputs.push({ lpId, currentLocation, assignLobby, tlcRemark });
+            });
+            console.log('Stored user inputs:', userInputs);
 
             document.getElementById('loading').innerText = 'Fetching data...';
             gapi.client.sheets.spreadsheets.values.get({
@@ -664,7 +767,6 @@
             }).then((response) => {
                 document.getElementById('loading').innerText = '';
                 const values = response.result.values || [];
-                const tbody = document.getElementById('reportBody');
                 tbody.innerHTML = '';
                 document.getElementById('error').innerText = '';
 
@@ -686,7 +788,7 @@
 
                 filteredData.forEach((row, index) => {
                     const rowIndex = values.indexOf(row) + 1;
-                    const forwardCount = parseInt(row[28]) || 0; // AC column (29th, 0-based index 28)
+                    const forwardCount = parseInt(row[28]) || 0;
                     const isForwarded = forwardCount > 0;
                     const isMaxForwarded = forwardCount >= 2;
                     const dutyHours = calculateDutyHours(row[7], currentTime);
@@ -696,16 +798,19 @@
                         tr.classList.add('forwarded-row');
                     }
 
-                    // Prepare CC L/H Remark column content
                     let cccContent = [];
                     if (row[21]) {
-                        cccContent.push(row[21]); // CCC Remark
+                        cccContent.push(row[21]);
                     }
-                    // Add CC L/H Name and Mobile Number only if at least one exists
                     if (row[26] || row[27]) {
                         cccContent.push(`(${row[26] || ''}/ ${row[27] || ''})`);
                     }
                     const cccDisplay = cccContent.join('<br>');
+
+                    const userInput = userInputs.find(input => input.lpId === (row[0] || ''));
+                    const currentLocationValue = userInput ? userInput.currentLocation : (row[17] || '');
+                    const assignLobbyValue = userInput ? userInput.assignLobby : (row[18] || '');
+                    const tlcRemarkValue = userInput ? userInput.tlcRemark : (row[19] || '');
 
                     tr.innerHTML = `
                         <td>${row[0] || ''}</td>
@@ -718,30 +823,43 @@
                         <td>${row[11] || ''}</td>
                         <td>${row[13] || ''}</td>
                         <td>${dutyHours}</td>
-                        <td><input type="text" id="currentLocation_${index}" value="${row[17] || ''}" placeholder="Enter Location" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase(); validateRow(${index}, ${rowIndex})" ${isMaxForwarded ? 'disabled="disabled"' : ''}></td>
+                        <td><input type="text" id="currentLocation_${index}" value="${currentLocationValue}" placeholder="Enter Location" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase(); validateRow(${index}, ${rowIndex})" ${isMaxForwarded ? 'disabled="disabled"' : ''}></td>
                         <td>
                             <select id="assignLobby_${index}" oninput="validateRow(${index}, ${rowIndex})" ${isMaxForwarded ? 'disabled="disabled"' : ''}>
-                                <option value="" disabled ${!row[18] ? 'selected' : ''}>Select Lobby</option>
-                                <option value="AKT" ${row[18] === 'AKT' ? 'selected' : ''}>AKT</option>
-                                <option value="BJRI" ${row[18] === 'BJRI' ? 'selected' : ''}>BJRI</option>
-                                <option value="BRJN" ${row[18] === 'BRJN' ? 'selected' : ''}>BRJN</option>
-                                <option value="BSP" ${row[18] === 'BSP' ? 'selected' : ''}>BSP</option>
-                                <option value="KHS" ${row[18] === 'KHS' ? 'selected' : ''}>KHS</option>
-                                <option value="KRBA" ${row[18] === 'KRBA' ? 'selected' : ''}>KRBA</option>
-                                <option value="PND" ${row[18] === 'PND' ? 'selected' : ''}>PND</option>
-                                <option value="RIG" ${row[18] === 'RIG' ? 'selected' : ''}>RIG</option>
-                                <option value="SDL" ${row[18] === 'SDL' ? 'selected' : ''}>SDL</option>
-                                <option value="SJQ" ${row[18] === 'SJQ' ? 'selected' : ''}>SJQ</option>
-                                <option value="USL" ${row[18] === 'USL' ? 'selected' : ''}>USL</option>
+                                <option value="" disabled ${!assignLobbyValue ? 'selected' : ''}>Select Lobby</option>
+                                <option value="AKT" ${assignLobbyValue === 'AKT' ? 'selected' : ''}>AKT</option>
+                                <option value="BJRI" ${assignLobbyValue === 'BJRI' ? 'selected' : ''}>BJRI</option>
+                                <option value="BRJN" ${assignLobbyValue === 'BRJN' ? 'selected' : ''}>BRJN</option>
+                                <option value="BSP" ${assignLobbyValue === 'BSP' ? 'selected' : ''}>BSP</option>
+                                <option value="KHS" ${assignLobbyValue === 'KHS' ? 'selected' : ''}>KHS</option>
+                                <option value="KRBA" ${assignLobbyValue === 'KRBA' ? 'selected' : ''}>KRBA</option>
+                                <option value="PND" ${assignLobbyValue === 'PND' ? 'selected' : ''}>PND</option>
+                                <option value="RIG" ${assignLobbyValue === 'RIG' ? 'selected' : ''}>RIG</option>
+                                <option value="SDL" ${assignLobbyValue === 'SDL' ? 'selected' : ''}>SDL</option>
+                                <option value="SJQ" ${assignLobbyValue === 'SJQ' ? 'selected' : ''}>SJQ</option>
+                                <option value="USL" ${assignLobbyValue === 'USL' ? 'selected' : ''}>USL</option>
                             </select>
                         </td>
-                        <td><textarea id="tlcRemark_${index}" placeholder="Enter TLC Remark" oninput="validateRow(${index}, ${rowIndex})" ${isMaxForwarded ? 'disabled="disabled"' : ''}>${row[19] || ''}</textarea></td>
+                        <td><textarea id="tlcRemark_${index}" placeholder="Enter TLC Remark" oninput="validateRow(${index}, ${rowIndex})" ${isMaxForwarded ? 'disabled="disabled"' : ''}>${tlcRemarkValue}</textarea></td>
                         <td>${cccDisplay}</td>
                         <td><button id="forwardButton_${index}" onclick="forwardData(${rowIndex}, ${index})" ${isMaxForwarded ? 'disabled="disabled"' : 'disabled'}>Forward</button></td>
                     `;
                     tbody.appendChild(tr);
                     validateRow(index, rowIndex);
                     console.log(`Row ${index}: rowIndex=${rowIndex}, forwardCount=${forwardCount}, isForwarded=${isForwarded}, isMaxForwarded=${isMaxForwarded}`);
+                });
+
+                Array.from(tbody.getElementsByTagName('tr')).forEach((row, index) => {
+                    const inputs = row.querySelectorAll('input, select, textarea');
+                    inputs.forEach(input => {
+                        input.addEventListener('input', () => {
+                            if (autoRefreshInterval) {
+                                clearInterval(autoRefreshInterval);
+                                autoRefreshInterval = null;
+                                console.log('Auto-refresh stopped due to input change');
+                            }
+                        });
+                    });
                 });
             }).catch((error) => {
                 document.getElementById('loading').innerText = '';
@@ -751,7 +869,7 @@
                 } else if (error.status === 401 || error.status === 403) {
                     document.getElementById('error').innerText += ' (Invalid or expired token. Re-authenticating...)';
                     tokenClient.requestAccessToken();
-                    setTimeout(showReport, 3000);
+                    setTimeout(() => showReport(isManualClick), 3000);
                 }
                 console.error('showReport error:', error);
             });
@@ -875,7 +993,6 @@
                             document.getElementById(`forwardButton_${index}`).disabled = true;
                             console.log(`Disabled inputs for row_${index} (forwardCount=${newForwardCount})`);
                         }
-                        // Verify update
                         gapi.client.sheets.spreadsheets.values.get({
                             spreadsheetId: SPREADSHEET_ID,
                             range: `${SHEET_NAME}!AC${rowIndex}`,
