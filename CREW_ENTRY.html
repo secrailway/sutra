@@ -1,0 +1,256 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crew ID Search</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #c3e7c9;
+        }
+
+        .container {
+            max-width: 1200px;
+        }
+
+        h2 {
+            font-weight: bold;
+            color: #6c09ee;
+        }
+
+        .form-control {
+            min-width: 200px;
+        }
+
+        .table {
+            border: 2px solid #343a40 !important;
+        }
+
+        .table th, .table td {
+            vertical-align: middle;
+            text-align: center;
+            border: 1px solid #343a40 !important;
+        }
+
+        .table thead {
+            background-color: #007bff;
+            color: white;
+        }
+
+        #results {
+            display: none;
+        }
+
+        #results.show {
+            display: block;
+        }
+
+        .success-text {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        #loading {
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .form-control {
+                min-width: 100%;
+            }
+
+            .table {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">SUTRA LAST ENTRIES</h2>
+        <form id="searchForm" class="mb-4">
+            <div class="row g-3 align-items-center justify-content-center">
+                <div class="col-auto">
+                    <label for="crewId" class="form-label">Crew ID</label>
+                </div>
+                <div class="col-auto">
+                    <input type="text" class="form-control" id="crewId" placeholder="e.g. BSP3637" required pattern=".{7,8}" title="LP ID must be like ex.BSP1234" oninput="this.value = this.value.toUpperCase().replace(/\s/g, '')">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </div>
+            </div>
+        </form>
+        <div id="loading" class="text-center" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading data...</p>
+        </div>
+        <div id="results" class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>LP ID</th>
+                        <th>LP Name</th>
+                        <th>ALP ID</th>
+                        <th>ALP Name</th>
+                        <th>Train No</th>
+                        <th>LOCO No</th>
+                        <th>Sign On Time</th>
+                        <th>Last Passed Station</th>
+                        <th>Time of Entry</th>
+                        <th>TLC Remark</th>
+                        <th>CCC Remark</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody"></tbody>
+            </table>
+            <div id="successMessage" class="text-center mt-3" style="display: none;">
+                <p class="success-text">Your data has been submitted successfully, and action will be taken by TLC/CCC at the earliest.</p>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_KEY = 'AIzaSyBf3C_Ly8bIF_f-t30wE2e7cMsc2hz0co0';
+            const SPREADSHEET_ID = '1Eob3yiujIi0sNtsPQr_HCvQtlybXnq6K11bm1wAcqAo';
+            const SHEET_NAME = 'input';
+            const RANGE = 'A:AB'; // Fixed range to include Column AA and AB
+
+            const searchForm = document.getElementById('searchForm');
+            if (!searchForm) {
+                console.error('Element with ID "searchForm" not found in the DOM.');
+                return;
+            }
+
+            searchForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const crewId = document.getElementById('crewId').value.trim().toUpperCase();
+                if (!crewId) {
+                    alert('Please enter a Crew ID');
+                    return;
+                }
+
+                // Show loading spinner
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('results').classList.remove('show');
+                document.getElementById('successMessage').style.display = 'none';
+
+                try {
+                    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!${RANGE}?key=${API_KEY}`;
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    // Hide loading spinner
+                    document.getElementById('loading').style.display = 'none';
+
+                    if (!data.values || data.values.length === 0) {
+                        document.getElementById('resultsBody').innerHTML = '<tr><td colspan="11">No data found</td></tr>';
+                        document.getElementById('results').classList.add('show');
+                        return;
+                    }
+
+                    // Extract rows where Crew ID matches LP ID (Column A) or ALP ID (Column D)
+                    const rows = data.values.slice(1); // Skip header
+                    const matchedRows = rows
+                        .filter(row => row[0]?.toUpperCase() === crewId || row[3]?.toUpperCase() === crewId)
+                        .slice(-3); // Get last 3 matches
+
+                    const resultsBody = document.getElementById('resultsBody');
+                    resultsBody.innerHTML = '';
+
+                    if (matchedRows.length === 0) {
+                        resultsBody.innerHTML = '<tr><td colspan="11">No matching records found</td></tr>';
+                    } else {
+                        matchedRows.forEach(row => {
+                            const [lpId, lpName, , alpId, alpName, , , signOnTime, , trainNo, locoNo, , lastStation, timestamp, , , , , assignLobby, tlcRemark, , cccRemark, , , tlcName, tlcPhone] = row;
+                            // Log raw values for TLC details
+                            console.log(`Row data - TLC Remark: ${tlcRemark}, TLC Name: ${tlcName}, TLC Phone: ${tlcPhone}, Assign Lobby: ${assignLobby}`);
+                            // Format: TLC Remark-(TLC NAME/TLC MOBILE NUMBER) Relief will done by [ASSIGN LOBBY] lobby
+                            const tlcNamePhonePart = tlcName || tlcPhone ? `(${tlcName || ''}/${tlcPhone || ''})` : '';
+                            const tlcRemarkPart = tlcRemark ? tlcRemark + (tlcNamePhonePart ? '-' : '') : '';
+                            const assignLobbyPart = assignLobby ? `Relief will done by [${assignLobby}] lobby` : '';
+                            const tlcDetails = [tlcRemarkPart + tlcNamePhonePart, assignLobbyPart].filter(Boolean).join(' ');
+
+                            // Log raw values for CCC details
+                            console.log(`Row data - CCC Remark: ${cccRemark}, CC L/H Name: ${row[26]}, CC Mobile Number: ${row[27]}`);
+                            // Format CCC Remark: CCC Remark-(CC L/H Name/CC Mobile Number)
+                            const ccNamePhonePart = row[26] || row[27] ? `(${row[26] || ''}/${row[27] || ''})` : '';
+                            const cccRemarkPart = cccRemark ? cccRemark + (ccNamePhonePart ? '-' : '') : '';
+                            const cccDetails = cccRemark || ccNamePhonePart ? cccRemarkPart + ccNamePhonePart : '';
+
+                            resultsBody.innerHTML += `
+                                <tr>
+                                    <td>${lpId || ''}</td>
+                                    <td>${lpName || ''}</td>
+                                    <td>${alpId || ''}</td>
+                                    <td>${alpName || ''}</td>
+                                    <td>${trainNo || ''}</td>
+                                    <td>${locoNo || ''}</td>
+                                    <td>${signOnTime || ''}</td>
+                                    <td>${lastStation || ''}</td>
+                                    <td>${timestamp || ''}</td>
+                                    <td>${tlcDetails}</td>
+                                    <td>${cccDetails}</td>
+                                </tr>
+                            `;
+                        });
+                        // Show success message
+                        document.getElementById('successMessage').style.display = 'block';
+                    }
+
+                    document.getElementById('results').classList.add('show');
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('resultsBody').innerHTML = '<tr><td colspan="11">Error fetching data</td></tr>';
+                    document.getElementById('results').classList.add('show');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
