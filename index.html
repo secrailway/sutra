@@ -3,37 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bilaspur Division</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Railway Website - Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hero-bg {
+            background-image: url('1.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+        h1 {
+            color: #ffffff;
+        }
+        /* Side panel styles */
+        #sidePanel {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        #sidePanel.open {
+            transform: translateX(0);
+        }
+    </style>
 </head>
-<body>
-
-    <!-- Image placed above the heading -->
-    <img src="Indian.png" alt="Bilaspur Division Image">
-
-    <h1>SUTRA</h1>
-    <h2>SUPERVISION OF TRANSPORTATION</h2>
-    <h3>TOOL TO ARRANGE RELIEF TO CREW ON TIME</h3>
-    <h4>DEVELOPED BY ELECTRICAL OPERATIONS</h4>
-    <h4>S.E.C. RAILWAY, BILASPUR DIVISION</h4>
-
-     <div class="flex-container">
-        <div class="flexbox">
-            <a href="sutra-login.html">SUTRA LOGIN</a>
+<body class="bg-gray-100 font-sans">
+    <!-- Navigation Bar -->
+    <nav class="bg-blue-900 text-white p-4 sticky top-0 shadow-md z-10">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <!-- Hamburger Menu Icon (visible only on mobile) -->
+                <button id="menuToggle" class="md:hidden text-white focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                    </svg>
+                </button>
+                <!-- Logo -->
+                <div class="text-2xl font-bold">SUTRA</div>
+            </div>
+            <!-- Desktop Navigation Links -->
+            <div class="hidden md:flex space-x-6">
+                <a href="index.html" class="hover:text-blue-300 transition">HOME</a>
+                <a href="sutra-login.html" class="hover:text-blue-300 transition">SUTRA LOGIN</a>
+                <a href="CREW_ENTRY.html" class="hover:text-blue-300 transition">CREW LAST ENTRY</a>
+                <a href="SUTRA User Manual.pdf" class="hover:text-blue-300 transition" target="_blank" rel="noopener noreferrer">USER MANUAL</a>
+                <a href="tlc_cc_login.html" class="hover:text-blue-300 transition">TLC & CC OPERATIONAL CONSOLE</a>
+                <a href="contact.html" class="hover:text-blue-300 transition">CONTACT US</a>
+            </div>
         </div>
-        
-        <div class="flexbox">
-            <a href="CREW_ENTRY.html">SUTRA LAST ENTRY</a>
+        <!-- Mobile Side Panel -->
+        <div id="sidePanel" class="fixed top-0 left-0 h-full w-64 bg-blue-800 text-white p-4 md:hidden z-20">
+            <button id="closeMenu" class="mb-4 text-white focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div class="flex flex-col space-y-4">
+                <a href="index.html" class="hover:text-blue-300 transition">HOME</a>
+                <a href="sutra-login.html" class="hover:text-blue-300 transition">SUTRA LOGIN</a>
+                <a href="CREW_ENTRY.html" class="hover:text-blue-300 transition">CREW LAST ENTRY</a>
+                <a href="SUTRA User Manual.pdf" class="hover:text-blue-300 transition" target="_blank" rel="noopener noreferrer">USER MANUAL</a>
+                <a href="tlc_cc_login.html" class="hover:text-blue-300 transition">TLC & CC OPERATIONAL CONSOLE</a>
+                <a href="contact.html" class="hover:text-blue-300 transition">CONTACT US</a>
+            </div>
         </div>
-        
-        <div class="flexbox">
-            <a href="SUTRA User Manual.pdf" target="_blank" rel="noopener noreferrer">USER MANUAL</a>
-        </div>
-        <div class="flexbox">
-            <a href="tlc_cc_login.html">TLC & CC OPERATIONS CONSOLE</a>
-        </div>
-        
-    </div>
+    </nav>
 
+    <!-- Hero Section -->
+    <section class="hero-bg h-96 flex items-center justify-center text-white">
+        <div class="text-center">
+            <h1 class="text-5xl font-bold mb-4">Welcome to SUTRA</h1>
+            <p class="text-xl mb-6">TOOL TO ARRANGE RELIEF TO CREW ON TIME</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="container mx-auto py-12">
+        <h2 class="text-3xl font-bold text-center mb-8">OUR EFFORTS TO REDUCE LONG WORKING HOURS</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold mb-4">CREW ENTRY IN SUTRA</h3>
+                <p>Sutra is a platform for the crew of Bilaspur Division, where they can send a message to TLC and CC after completing 7 hours.</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold mb-4">Live monitoring by TLC and CC Long Hours</h3>
+                <p>Live monitoring is done through TLC and CC to help reduce long working hours cases.</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold mb-4">Crew Support</h3>
+                <p>The crew receives 24/7 support through this platform.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-blue-900 text-white py-6">
+        <div class="container mx-auto text-center">
+            <p>© 2025 Indian Railways. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // JavaScript to toggle side panel
+        const menuToggle = document.getElementById('menuToggle');
+        const closeMenu = document.getElementById('closeMenu');
+        const sidePanel = document.getElementById('sidePanel');
+
+        menuToggle.addEventListener('click', () => {
+            sidePanel.classList.toggle('open');
+        });
+
+        closeMenu.addEventListener('click', () => {
+            sidePanel.classList.remove('open');
+        });
+
+        // Close side panel when clicking a link
+        sidePanel.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                sidePanel.classList.remove('open');
+            });
+        });
+    </script>
 </body>
 </html>
