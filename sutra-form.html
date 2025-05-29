@@ -288,9 +288,9 @@
                 const info = nameLookup[id] || {};
                 const name = info.name || 'PLEASE CHECK ID';
                 const mobile = info.mobile || '';
-                document.getElementById(nameElementId).textContent = name !== 'PLEASE CHECK ID' ? `Name: ${name}` : name;
-                document.getElementById(nameHiddenElementId).value = name !== 'PLEASE CHECK ID' ? name : '';
-                document.getElementById(mobileHiddenElementId).value = name !== 'PLEASE CHECK ID' ? mobile : '';
+                document.getElementById(nameElementId).textContent = name !== '' ? `Name: ${name}` : name;
+                document.getElementById(nameHiddenElementId).value = name !== '' ? name : '';
+                document.getElementById(mobileHiddenElementId).value = mobile;
             }
 
             // Event listener for LP ID input
@@ -382,6 +382,19 @@
                 return newFormData;
             }
 
+            // Function to parse DD/MM/YYYY HH:MM:SS to Date object
+            function parseDateTime(dateStr, timeStr) {
+                if (timeStr.includes('/')) {
+                    timeStr = timeStr.split(' ')[1] || timeStr;
+                }
+                if (timeStr.length === 5) {
+                    timeStr += ":00";
+                }
+                const [day, month, year] = dateStr.split('-').reverse();
+                const [hours, minutes, seconds] = timeStr.split(':');
+                return new Date(year, month - 1, day, hours, minutes, seconds);
+            }
+
             // Form submission logic
             document.getElementById("sutra-form").addEventListener("submit", function(e) {
                 e.preventDefault();
@@ -389,6 +402,14 @@
                 // Get the values of the date and time fields
                 const signOnDate = document.getElementById("sign-on-date").value;
                 const signOnTimeInput = document.getElementById("sign-on-time").value;
+
+                // Validate date and time
+                const inputDateTime = parseDateTime(signOnDate, signOnTimeInput);
+                const now = new Date();
+                if (inputDateTime > now) {
+                    alert("Error: Sign-on date and time cannot be in the future. Please correct it.");
+                    return;
+                }
 
                 // fetch properly name and number of LP and ALP
                 const lpName = document.getElementById("lp-name-hidden").value;
