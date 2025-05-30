@@ -12,7 +12,7 @@
     <script src="https://accounts.google.com/gsi/client?v=2025052205"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <script>
+     <script>
         // Token validation
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -737,7 +737,7 @@
                 }
             }
 
-            // Clear any existing auto-refresh interval
+            // Clear existing auto-refresh interval
             if (autoRefreshInterval) {
                 clearInterval(autoRefreshInterval);
                 autoRefreshInterval = null;
@@ -748,7 +748,7 @@
             autoRefreshInterval = setInterval(() => showReport(false), 30000);
             console.log('Started auto-refresh interval');
 
-            // Store current input values to preserve them during refresh
+            // Store current user inputs to preserve them
             const tbody = document.getElementById('reportBody');
             const userInputs = [];
             Array.from(tbody.getElementsByTagName('tr')).forEach((row, index) => {
@@ -761,10 +761,11 @@
             console.log('Stored user inputs:', userInputs);
 
             document.getElementById('loading').innerText = 'Fetching data...';
-            gapi.client.sheets.spreadsheets.values.get({
-                spreadsheetId: SPREADSHEET_ID,
-                range: `${SHEET_NAME}!A:AC`,
-            }).then((response) => {
+            try {
+                const response = await gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: SPREADSHEET_ID,
+                    range: `${SHEET_NAME}!A:AC`,
+                });
                 document.getElementById('loading').innerText = '';
                 const values = response.result.values || [];
                 tbody.innerHTML = '';
@@ -773,7 +774,7 @@
                 const currentTime = new Date();
 
                 const filteredData = values.filter((row, index) => {
-                    if (index === 0) return false;
+                    if (index === 0) return false; // Skip header row
                     const rowSection = row[12] || '';
                     const rowDate = row[6] ? (row[6].includes('/') ? row[6].split('/').reverse().join('-') : row[6]) : '';
                     const hasNoSignOffTime = !row[22];
@@ -784,6 +785,7 @@
 
                 if (filteredData.length === 0) {
                     document.getElementById('error').innerText = 'No data found for the selected section and date range.';
+                    return;
                 }
 
                 filteredData.forEach((row, index) => {
@@ -799,30 +801,28 @@
                     }
 
                     let cccContent = [];
-                    if (row[21]) {
-                        cccContent.push(row[21]);
-                    }
-                    if (row[26] || row[27]) {
-                        cccContent.push(`(${row[26] || ''}/ ${row[27] || ''})`);
-                    }
+                    if (row[21]) cccContent.push(row[21]);
+                    if (row[26] || row[27]) cccContent.push(`(${row[26] || ''}/ ${row[27] || ''})`);
                     const cccDisplay = cccContent.join('<br>');
 
+                    // Retrieve user inputs or use sheet values
                     const userInput = userInputs.find(input => input.lpId === (row[0] || ''));
                     const currentLocationValue = userInput ? userInput.currentLocation : (row[17] || '');
                     const assignLobbyValue = userInput ? userInput.assignLobby : (row[18] || '');
                     const tlcRemarkValue = userInput ? userInput.tlcRemark : (row[19] || '');
 
+                    // Populate row with latest sheet data and preserved user inputs
                     tr.innerHTML = `
-                        <td>${row[0] || ''}</td>
-                        <td>${row[1] || ''}</td>
-                        <td>${row[2] || ''}</td>
-                        <td>${row[4] || ''}</td>
-                        <td>${row[7] || ''}</td>
-                        <td>${row[9] || ''}</td>
-                        <td>${row[10] || ''}</td>
-                        <td>${row[11] || ''}</td>
-                        <td>${row[13] || ''}</td>
-                        <td>${dutyHours}</td>
+                        <td>${row[0] || ''}</td> <!-- LP ID -->
+                        <td>${row[1] || ''}</td> <!-- LP Name -->
+                        <td>${row[2] || ''}</td> <!-- LP Mobile -->
+                        <td>${row[4] || ''}</td> <!-- ALP Name -->
+                        <td>${row[7] || ''}</td> <!-- Sign On Time -->
+                        <td>${row[9] || ''}</td> <!-- Train No -->
+                        <td>${row[10] || ''}</td> <!-- LOCO No -->
+                        <td>${row[11] || ''}</td> <!-- Last Passed Station -->
+                        <td>${row[13] || ''}</td> <!-- Crew Entry Time -->
+                        <td>${dutyHours}</td> <!-- Duty Hours -->
                         <td><input type="text" id="currentLocation_${index}" value="${currentLocationValue}" placeholder="Enter Location" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase(); validateRow(${index}, ${rowIndex})" ${isMaxForwarded ? 'disabled="disabled"' : ''}></td>
                         <td>
                             <select id="assignLobby_${index}" oninput="validateRow(${index}, ${rowIndex})" ${isMaxForwarded ? 'disabled="disabled"' : ''}>
@@ -841,7 +841,7 @@
                             </select>
                         </td>
                         <td><textarea id="tlcRemark_${index}" placeholder="Enter TLC Remark" oninput="validateRow(${index}, ${rowIndex})" ${isMaxForwarded ? 'disabled="disabled"' : ''}>${tlcRemarkValue}</textarea></td>
-                        <td>${cccDisplay}</td>
+                        <td>${cccDisplay}</td> <!-- CC L/H Remark -->
                         <td><button id="forwardButton_${index}" onclick="forwardData(${rowIndex}, ${index})" ${isMaxForwarded ? 'disabled="disabled"' : 'disabled'}>Forward</button></td>
                     `;
                     tbody.appendChild(tr);
@@ -849,6 +849,7 @@
                     console.log(`Row ${index}: rowIndex=${rowIndex}, forwardCount=${forwardCount}, isForwarded=${isForwarded}, isMaxForwarded=${isMaxForwarded}`);
                 });
 
+                // Add input event listeners to stop auto-refresh on user interaction
                 Array.from(tbody.getElementsByTagName('tr')).forEach((row, index) => {
                     const inputs = row.querySelectorAll('input, select, textarea');
                     inputs.forEach(input => {
@@ -857,11 +858,18 @@
                                 clearInterval(autoRefreshInterval);
                                 autoRefreshInterval = null;
                                 console.log('Auto-refresh stopped due to input change');
+                                // Resume auto-refresh after 10 seconds of inactivity
+                                setTimeout(() => {
+                                    if (!autoRefreshInterval) {
+                                        autoRefreshInterval = setInterval(() => showReport(false), 30000);
+                                        console.log('Auto-refresh resumed after inactivity');
+                                    }
+                                }, 10000);
                             }
                         });
                     });
                 });
-            }).catch((error) => {
+            } catch (error) {
                 document.getElementById('loading').innerText = '';
                 document.getElementById('error').innerText = `Error fetching data: ${error.result?.error?.message || error.message}`;
                 if (error.status === 400) {
@@ -872,7 +880,7 @@
                     setTimeout(() => showReport(isManualClick), 3000);
                 }
                 console.error('showReport error:', error);
-            });
+            }
         }
 
         function validateRow(index, rowIndex) {
@@ -897,7 +905,7 @@
             }
         }
 
-        function forwardData(rowIndex, index) {
+        async function forwardData(rowIndex, index) {
             console.log('forwardData called:', { rowIndex, index });
 
             if (!tokenClient) {
@@ -938,93 +946,84 @@
                 }).replace(/,/, '').replace(/(\d+)\/(\d+)\/(\d+)/, '$1/$2/$3');
 
                 document.getElementById('loading').innerText = 'Fetching forward count...';
-                gapi.client.sheets.spreadsheets.values.get({
+                const response = await gapi.client.sheets.spreadsheets.values.get({
                     spreadsheetId: SPREADSHEET_ID,
                     range: `${SHEET_NAME}!AC${rowIndex}`,
-                }).then((response) => {
-                    console.log('Raw API response for AC fetch:', response.result);
-                    const forwardCount = parseInt(response.result.values?.[0]?.[0]) || 0;
-                    const newForwardCount = forwardCount + 1;
-                    console.log(`AC${rowIndex}: forwardCount=${forwardCount}, newForwardCount=${newForwardCount}`);
-
-                    if (newForwardCount > 2) {
-                        document.getElementById('error').innerText = 'Maximum forward limit (2) reached for this row.';
-                        document.getElementById('loading').innerText = '';
-                        console.log('forwardData failed: max forwards reached');
-                        return;
-                    }
-
-                    document.getElementById('loading').innerText = 'Updating data...';
-                    gapi.client.sheets.spreadsheets.values.batchUpdate({
-                        spreadsheetId: SPREADSHEET_ID,
-                        resource: {
-                            valueInputOption: 'RAW',
-                            data: [
-                                {
-                                    range: `${SHEET_NAME}!Q${rowIndex}:T${rowIndex}`,
-                                    values: [[tlcTimestamp, currentLocation, assignLobby, tlcRemark]]
-                                },
-                                {
-                                    range: `${SHEET_NAME}!Y${rowIndex}:Z${rowIndex}`,
-                                    values: [[tlcName, tlcMobile]]
-                                },
-                                {
-                                    range: `${SHEET_NAME}!AC${rowIndex}`,
-                                    values: [[newForwardCount]]
-                                }
-                            ]
-                        }
-                    }).then((updateResponse) => {
-                        console.log('Batch update response:', updateResponse);
-                        document.getElementById('loading').innerText = '';
-                        alert('Data updated successfully!');
-                        console.log(`forwardData success: rowIndex=${rowIndex}, newForwardCount=${newForwardCount}`);
-                        const row = document.getElementById(`row_${index}`);
-                        if (row) {
-                            row.classList.add('forwarded-row');
-                            console.log(`Applied forwarded-row class to row_${index}`);
-                        } else {
-                            console.error(`Row row_${index} not found`);
-                        }
-                        if (newForwardCount >= 2) {
-                            document.getElementById(`currentLocation_${index}`).disabled = true;
-                            document.getElementById(`assignLobby_${index}`).disabled = true;
-                            document.getElementById(`tlcRemark_${index}`).disabled = true;
-                            document.getElementById(`forwardButton_${index}`).disabled = true;
-                            console.log(`Disabled inputs for row_${index} (forwardCount=${newForwardCount})`);
-                        }
-                        gapi.client.sheets.spreadsheets.values.get({
-                            spreadsheetId: SPREADSHEET_ID,
-                            range: `${SHEET_NAME}!AC${rowIndex}`,
-                        }).then((verifyResponse) => {
-                            const verifiedCount = parseInt(verifyResponse.result.values?.[0]?.[0]) || 0;
-                            console.log(`Verified AC${rowIndex} after update: ${verifiedCount}`);
-                            if (verifiedCount !== newForwardCount) {
-                                console.error(`Update mismatch: expected ${newForwardCount}, got ${verifiedCount}`);
-                                document.getElementById('error').innerText = 'Update failed: Forward count not updated correctly. Please try again.';
-                            }
-                        }).catch((verifyError) => {
-                            console.error('Error verifying update:', verifyError);
-                        });
-                    }).catch((error) => {
-                        document.getElementById('loading').innerText = '';
-                        document.getElementById('error').innerText = `Error updating data: ${error.result?.error?.message || error.message}`;
-                        if (error.status === 401 || error.status === 403) {
-                            document.getElementById('error').innerText += ' (Invalid or expired token. Re-authenticating...)';
-                            tokenClient.requestAccessToken();
-                            setTimeout(() => forwardData(rowIndex, index), 3000);
-                        }
-                        console.error('forwardData update error:', error);
-                    });
-                }).catch((error) => {
-                    document.getElementById('loading').innerText = '';
-                    document.getElementById('error').innerText = `Error fetching forward count: ${error.result?.error?.message || error.message}`;
-                    console.error('forwardData fetch error:', error);
                 });
+                console.log('Raw API response for AC fetch:', response.result);
+                const forwardCount = parseInt(response.result.values?.[0]?.[0]) || 0;
+                const newForwardCount = forwardCount + 1;
+                console.log(`AC${rowIndex}: forwardCount=${forwardCount}, newForwardCount=${newForwardCount}`);
+
+                if (newForwardCount > 2) {
+                    document.getElementById('error').innerText = 'Maximum forward limit (2) reached for this row.';
+                    document.getElementById('loading').innerText = '';
+                    console.log('forwardData failed: max forwards reached');
+                    return;
+                }
+
+                document.getElementById('loading').innerText = 'Updating data...';
+                const updateResponse = await gapi.client.sheets.spreadsheets.values.batchUpdate({
+                    spreadsheetId: SPREADSHEET_ID,
+                    resource: {
+                        valueInputOption: 'RAW',
+                        data: [
+                            {
+                                range: `${SHEET_NAME}!Q${rowIndex}:T${rowIndex}`,
+                                values: [[tlcTimestamp, currentLocation, assignLobby, tlcRemark]]
+                            },
+                            {
+                                range: `${SHEET_NAME}!Y${rowIndex}:Z${rowIndex}`,
+                                values: [[tlcName, tlcMobile]]
+                            },
+                            {
+                                range: `${SHEET_NAME}!AC${rowIndex}`,
+                                values: [[newForwardCount]]
+                            }
+                        ]
+                    }
+                });
+                console.log('Batch update response:', updateResponse);
+                document.getElementById('loading').innerText = '';
+                alert('Data updated successfully!');
+                console.log(`forwardData success: rowIndex=${rowIndex}, newForwardCount=${newForwardCount}`);
+                const row = document.getElementById(`row_${index}`);
+                if (row) {
+                    row.classList.add('forwarded-row');
+                    console.log(`Applied forwarded-row class to row_${index}`);
+                } else {
+                    console.error(`Row row_${index} not found`);
+                }
+                if (newForwardCount >= 2) {
+                    document.getElementById(`currentLocation_${index}`).disabled = true;
+                    document.getElementById(`assignLobby_${index}`).disabled = true;
+                    document.getElementById(`tlcRemark_${index}`).disabled = true;
+                    document.getElementById(`forwardButton_${index}`).disabled = true;
+                    console.log(`Disabled inputs for row_${index} (forwardCount=${newForwardCount})`);
+                }
+                try {
+                    const verifyResponse = await gapi.client.sheets.spreadsheets.values.get({
+                        spreadsheetId: SPREADSHEET_ID,
+                        range: `${SHEET_NAME}!AC${rowIndex}`,
+                    });
+                    const verifiedCount = parseInt(verifyResponse.result.values?.[0]?.[0]) || 0;
+                    console.log(`Verified AC${rowIndex} after update: ${verifiedCount}`);
+                    if (verifiedCount !== newForwardCount) {
+                        console.error(`Update mismatch: expected ${newForwardCount}, got ${verifiedCount}`);
+                        document.getElementById('error').innerText = 'Update failed: Forward count not updated correctly. Please try again.';
+                    }
+                } catch (verifyError) {
+                    console.error('Error verifying update:', verifyError);
+                }
             } catch (error) {
                 document.getElementById('loading').innerText = '';
-                document.getElementById('error').innerText = `Error formatting timestamp: ${error.message}`;
-                console.error('forwardData timestamp error:', error);
+                document.getElementById('error').innerText = `Error updating data: ${error.result?.error?.message || error.message}`;
+                if (error.status === 401 || error.status === 403) {
+                    document.getElementById('error').innerText += ' (Invalid or expired token. Re-authenticating...)';
+                    tokenClient.requestAccessToken();
+                    setTimeout(() => forwardData(rowIndex, index), 3000);
+                }
+                console.error('forwardData error:', error);
             }
         }
 

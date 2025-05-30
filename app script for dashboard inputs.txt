@@ -1,0 +1,63 @@
+const sheetId = '1Eob3yiujIi0sNtsPQr_HCvQtlybXnq6K11bm1wAcqAo'; // Replace with your actual Spreadsheet ID
+const sheetName = 'input'; // Use the correct sheet name
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  lock.tryLock(10000); // Locks script for 10 seconds to prevent concurrent access issues
+
+  try {
+    const doc = SpreadsheetApp.openById(sheetId);
+    const sheet = doc.getSheetByName(sheetName);
+
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const nextRow = sheet.getLastRow() + 1;
+
+    const newRow = headers.map(function(header) {
+      switch(header) {
+        case 'LP ID':
+          return e.parameter['lp-id'] || '';
+        case 'LP Name':
+          return e.parameter['lp-name-hidden'] || '';
+        case 'LP Mobile':
+          return e.parameter['lp-mobile-hidden'] || ''; // Add LP Mobile
+        case 'ALP ID':
+          return e.parameter['alp-id'] || '';
+        case 'ALP Name':
+          return e.parameter['alp-name-hidden'] || '';
+        case 'ALP Mobile':
+          return e.parameter['alp-mobile-hidden'] || ''; // Add ALP Mobile
+        case 'Train No':
+          return e.parameter['train-no'] || '';
+        case 'LOCO No':
+          return e.parameter['loco-no'] || '';
+        case 'Sign On Date':
+          return e.parameter['sign-on-date'] || '';
+        case 'Sign On Time':
+          return e.parameter['sign-on-time'] || '';
+        case 'Direction':
+          return e.parameter['direction'] || '';
+        case 'Last Passed Station':
+          return e.parameter['last-passed-station'] || '';
+        case 'ML/CIC':
+          return e.parameter['ml-cic'] || '';
+        case 'TimeStamp': // New case for Timestamp
+          return e.parameter['timestamp'] || '';
+        default:
+          return ''; // Default empty for unhandled headers
+      }
+    });
+
+    sheet.getRange(nextRow, 1, 1, newRow.length).setValues([newRow]);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ 'result': 'success', 'row': nextRow }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (e) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ 'result': 'error', 'error': e.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock(); // Releases the lock after execution
+  }
+}
+

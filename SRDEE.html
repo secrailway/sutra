@@ -77,6 +77,23 @@
             background-color: #9ca3af;
             cursor: not-allowed;
         }
+        .logout-button {
+            padding: 4px 12px;
+            background: linear-gradient(90deg, #003087, #F5A623);
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 8px;
+        }
+        .logout-button:hover {
+            background: linear-gradient(90deg, #002366, #e69500);
+        }
         .loader {
             border: 3px solid #f3f4f6;
             border-top: 3px solid #4b5563;
@@ -103,7 +120,7 @@
             max-width: 100%;
             margin: 0 auto;
             overflow-x: auto;
-            max-height: 70vh; /* Changed to relative unit (70% of viewport height) */
+            max-height: 70vh;
             overflow-y: auto;
             background: #ffffff;
         }
@@ -189,23 +206,25 @@
         }
         @media (max-width: 768px) {
             body {
-                padding: 0.5rem; /* Relative unit */
+                padding: 0.5rem;
             }
             .form-container {
                 grid-template-columns: 1fr;
                 margin: 0 0 0.5rem;
                 padding: 0.5rem;
             }
-            .form-container button {
+            .form-container button,
+            .logout-button {
                 width: 100%;
+                font-size: 0.5rem;
+                padding: 0.2rem 0.3rem;
             }
             th, td {
-                font-size: 0.55rem; /* Relative unit */
+                font-size: 0.55rem;
                 padding: 0.25rem 0.3rem;
             }
             .form-container select,
-            .form-container input[type="date"],
-            .form-container button {
+            .form-container input[type="date"] {
                 font-size: 0.55rem;
                 padding: 0.3rem 0.4rem;
             }
@@ -279,6 +298,9 @@
                             <span id="loader" class="loader hidden"></span>
                         </button>
                     </div>
+                    <div>
+                        <button class="logout-button" onclick="handleLogout()">Logout</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -295,9 +317,21 @@
     </div>
 
     <script>
+        // Token validation
+        const token = localStorage.getItem('authToken');
+        if (!token || !token.startsWith('srdee_auth_')) {
+            window.location.href = 'adminlogin.html';
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('authToken');
+            window.location.href = 'adminlogin.html';
+        }
+
         const API_KEY = 'AIzaSyBf3C_Ly8bIF_f-t30wE2e7cMsc2hz0co0';
         const SPREADSHEET_ID = '1Eob3yiujIi0sNtsPQr_HCvQtlybXnq6K11bm1wAcqAo';
         const SHEET_NAME = 'input';
+        let autoRefreshInterval = null;
 
         async function fetchSheetData(section, fromDate, toDate, filter) {
             const range = `${SHEET_NAME}!A:AB`;
@@ -574,6 +608,43 @@
             }
         }
 
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                console.log('Cleared existing auto-refresh interval');
+            }
+            autoRefreshInterval = setInterval(async () => {
+                const section = document.getElementById('section').value;
+                const fromDate = document.getElementById('fromDate').value;
+                const toDate = document.getElementById('toDate').value;
+                const filter = document.getElementById('filter').value;
+                const loader = document.getElementById('loader');
+                const tableBody = document.getElementById('reportTableBody');
+                const errorDiv = document.getElementById('error');
+
+                if (!fromDate || !toDate) {
+                    console.warn('Auto-refresh skipped: Missing date inputs');
+                    return;
+                }
+
+                try {
+                    loader.classList.remove('hidden');
+                    console.log('Loader: shown (auto-refresh)');
+                    tableBody.innerHTML = '<tr><td colspan="16" class="px-3 py-2 text-center text-sm text-gray-500">Loading...</td></tr>';
+
+                    const data = await fetchSheetData(section, fromDate, toDate, filter);
+                    renderTable(data, filter);
+                } catch (error) {
+                    console.error('Auto-refresh error:', error);
+                    errorDiv.innerText = `Auto-refresh error: ${error.message}`;
+                } finally {
+                    loader.classList.add('hidden');
+                    console.log('Loader: hidden (auto-refresh complete)');
+                }
+            }, 30000);
+            console.log('Started auto-refresh interval');
+        }
+
         async function loadDefaultData() {
             const now = new Date();
             const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -599,6 +670,7 @@
 
                 const data = await fetchSheetData('ALL', fromDate, toDate, 'all');
                 renderTable(data, 'all');
+                startAutoRefresh();
             } catch (error) {
                 console.error('Error loading default data:', error);
                 document.getElementById('error').innerText = `Error loading data: ${error.message}`;
@@ -640,6 +712,7 @@
 
                 const data = await fetchSheetData(section, fromDate, toDate, filter);
                 renderTable(data, filter);
+                startAutoRefresh();
             } catch (error) {
                 console.error('Error submitting form:', error);
                 errorDiv.innerText = `Error submitting form: ${error.message}`;
@@ -650,6 +723,17 @@
                 console.log('Loader: hidden (form submit complete)');
                 document.getElementById('reportContainer').classList.remove('hidden');
             }
+        });
+
+        // Stop auto-refresh on form input changes
+        ['section', 'fromDate', 'toDate', 'filter'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                    console.log('Auto-refresh stopped due to form input change');
+                }
+            });
         });
 
         window.onload = loadDefaultData;

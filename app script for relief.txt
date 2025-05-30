@@ -1,0 +1,64 @@
+const sheetName = 'Sheet2'; // Replace with your actual sheet name
+const sheetId = '1-CsZz3zX2F-9OOyG9rFaRUdFAkKuIDGt5YgZ6AYDFvU'; // Replace with your actual Spreadsheet ID
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  lock.tryLock(10000); // Locks script for 10 seconds to prevent concurrent access issues
+
+  try {
+    // Open the spreadsheet using the specified ID
+    const doc = SpreadsheetApp.openById(sheetId);
+    const sheet = doc.getSheetByName(sheetName);
+
+    // Get headers from the first row
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+    // Determine the next available row for appending data
+    const nextRow = sheet.getLastRow() + 1;
+
+    // Map request parameters to headers and prepare row data
+    const newRow = headers.map(function(header) {
+      switch(header) {
+        case 'Date':
+          return e.parameter['relief-date'] || ''; // Handles optional field
+        case 'Time':
+          return e.parameter['relief-time'] || ''; // Handles optional field
+        case 'LP ID':
+          return e.parameter['lp-id'].toUpperCase() || ''; // Handles optional field and converts to uppercase
+        case 'LP Name':
+          return e.parameter['lp-name-hidden'].toUpperCase() || ''; // Handles optional field and converts to uppercase
+        case 'ALP ID':
+          return e.parameter['alp-id'].toUpperCase() || ''; // Handles optional field and converts to uppercase
+        case 'ALP Name':
+          return e.parameter['alp-name-hidden'].toUpperCase() || ''; // Handles optional field and converts to uppercase
+        case 'Train No':
+          return e.parameter['train-no'].toUpperCase() || ''; // Handles optional field and converts to uppercase
+        case 'LOCO No':
+          return e.parameter['loco-no'].toUpperCase() || ''; // Handles optional field and converts to uppercase
+        case 'Relief Station':
+          return e.parameter['relief-station'].toUpperCase() || ''; // Handles optional field and converts to uppercase
+        case 'Sign Off Station':
+          return e.parameter['sign-off-stn'].toUpperCase() || ''; // Handles optional field and converts to uppercase
+        case 'Timestamp':
+          return new Date(); // Adds current date and time as timestamp
+        default:
+          return ''; // Default empty for unhandled headers
+      }
+    });
+
+    // Append the new row of data to the sheet
+    sheet.getRange(nextRow, 1, 1, newRow.length).setValues([newRow]);
+
+    // Return success response as JSON
+    return ContentService
+      .createTextOutput(JSON.stringify({ 'result': 'success', 'row': nextRow }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (e) {
+    // Return error response if any exception occurs
+    return ContentService
+      .createTextOutput(JSON.stringify({ 'result': 'error', 'error': e.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock(); // Releases the lock after execution
+  }
+}

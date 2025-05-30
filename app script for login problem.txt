@@ -1,0 +1,52 @@
+const sheetName = 'Sheet1'; // Replace with your actual sheet name
+const sheetId = '1APU8aM-feWlWsu5Q16X4epGRvQ1qNpd5MQuNsPf6pv8'; // Replace with your actual Spreadsheet ID
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  lock.tryLock(10000); // Locks script for 10 seconds to prevent concurrent access issues
+
+  try {
+    // Open the spreadsheet using the specified ID
+    const doc = SpreadsheetApp.openById(sheetId);
+    const sheet = doc.getSheetByName(sheetName);
+
+    // Get headers from the first row
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+    // Determine the next available row for appending data
+    const nextRow = sheet.getLastRow() + 1;
+
+    // Map request parameters to headers and prepare row data
+    const newRow = headers.map(function(header) {
+      switch(header) {
+        case 'Date':
+          return new Date();
+        case 'CREW ID':
+          return e.parameter.crewId;
+        case 'CREW NAME AS ON CMS':
+          return e.parameter.crewName;
+        case 'MOBILE NUMBER':
+          return e.parameter.mobileNumber;
+        case 'PREVIOUS CREW ID':
+          return e.parameter.previousCrewId || ''; // Handles optional field
+        default:
+          return ''; // Default empty for unhandled headers
+      }
+    });
+
+    // Append the new row of data to the sheet
+    sheet.getRange(nextRow, 1, 1, newRow.length).setValues([newRow]);
+
+    // Return success response as JSON
+    return ContentService
+      .createTextOutput(JSON.stringify({ 'result': 'success', 'row': nextRow }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (e) {
+    // Return error response if any exception occurs
+    return ContentService
+      .createTextOutput(JSON.stringify({ 'result': 'error', 'error': e.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock(); // Releases the lock after execution
+  }
+}

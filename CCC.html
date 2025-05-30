@@ -12,6 +12,7 @@
     <script src="https://accounts.google.com/gsi/client?v=2025052205"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script>
         // Token validation
         function getQueryParam(param) {
@@ -161,7 +162,6 @@
             background-color: #fed7aa !important;
             color: #1f2937 !important;
         }
-        /* Column Widths for OUR CREW (in pixels) */
         th.our-crew:nth-child(1), td.our-crew:nth-child(1) { width: 60px; }
         th.our-crew:nth-child(2), td.our-crew:nth-child(2) { width: 100px; }
         th.our-crew:nth-child(3), td.our-crew:nth-child(3) { width: 80px; }
@@ -179,7 +179,6 @@
         th.our-crew:nth-child(14), td.our-crew:nth-child(14) { width: 80px; }
         th.our-crew:nth-child(15), td.our-crew:nth-child(15) { width: 70px; }
         th.our-crew:nth-child(16), td.our-crew:nth-child(16) { width: 70px; }
-        /* Column Widths for OUR JURISDICTION (in pixels) */
         th.our-jurisdiction:nth-child(1), td.our-jurisdiction:nth-child(1) { width: 60px; }
         th.our-jurisdiction:nth-child(2), td.our-jurisdiction:nth-child(2) { width: 100px; }
         th.our-jurisdiction:nth-child(3), td.our-jurisdiction:nth-child(3) { width: 80px; }
@@ -196,25 +195,23 @@
         th.our-jurisdiction:nth-child(13), td.our-jurisdiction:nth-child(13) { width: 90px; }
         th.our-jurisdiction:nth-child(14), td.our-jurisdiction:nth-child(14) { width: 80px; }
         th.our-jurisdiction:nth-child(15), td.our-jurisdiction:nth-child(15) { width: 70px; }
-        /* Remove truncation for LP Name and ALP Name */
         td.our-crew:nth-child(2), td.our-crew:nth-child(4),
         td.our-jurisdiction:nth-child(2), td.our-jurisdiction:nth-child(4) {
             overflow-wrap: break-word;
             white-space: normal;
         }
-        /* Truncate long text in other specific columns */
         td.our-crew:nth-child(10), td.our-crew:nth-child(11),
         td.our-jurisdiction:nth-child(10) {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .yellow-star {
+        .message-icon {
             position: absolute;
             top: 2px;
             right: 2px;
             font-size: 12px;
-            color: #5f19e0;
+            color: #eaf211;
             cursor: pointer;
             z-index: 2;
             line-height: 1;
@@ -482,8 +479,7 @@
         <label for="criteria">Select Criteria:</label>
         <select id="criteria">
             <option value="OUR JURISDICTION">OUR JURISDICTION</option>
-            <option value="OUR CREW">OUR CREW</option>
-            
+            <option value="OUR CREW">OUR CREW</option> 
         </select>
         <label for="lobby">Lobby:</label>
         <select id="lobby">
@@ -846,7 +842,6 @@
                 return;
             }
 
-            // Log CCC entry only on manual click
             if (isManualClick) {
                 const logSuccess = await logCccEntry(lobby, cccName, shift);
                 if (!logSuccess) {
@@ -854,18 +849,15 @@
                 }
             }
 
-            // Clear any existing auto-refresh interval
             if (autoRefreshInterval) {
                 clearInterval(autoRefreshInterval);
                 autoRefreshInterval = null;
                 console.log('Cleared existing auto-refresh interval');
             }
 
-            // Start auto-refresh every 30 seconds
             autoRefreshInterval = setInterval(() => showReport(false), 30000);
             console.log('Started auto-refresh interval');
 
-            // Store current input values to preserve them during refresh
             const tbody = document.getElementById('reportBody');
             const userInputs = [];
             Array.from(tbody.getElementsByTagName('tr')).forEach((row, index) => {
@@ -980,7 +972,7 @@
                             <td class="our-jurisdiction">${row[13] || ''}</td>
                             <td class="our-jurisdiction">
                                 ${row[16] || ''}
-                                <span class="yellow-star" onclick="showTlcRemark('${row[19]?.replace(/'/g, "\\'") || ''}', '${row[24]?.replace(/'/g, "\\'") || ''}', '${row[25]?.replace(/'/g, "\\'") || ''}')">★</span>
+                                <span class="message-icon" onclick="showTlcRemark('${row[19]?.replace(/'/g, "\\'") || ''}', '${row[24]?.replace(/'/g, "\\'") || ''}', '${row[25]?.replace(/'/g, "\\'") || ''}')"><i class="fas fa-message"></i></span>
                             </td>
                             <td class="our-jurisdiction">${row[17] || ''}</td>
                             <td class="our-jurisdiction">${dutyHours}</td>
@@ -1001,7 +993,7 @@
                             <td class="our-crew">${row[13] || ''}</td>
                             <td class="our-crew">
                                 ${row[16] || ''}
-                                <span class="yellow-star" onclick="showTlcRemark('${row[19]?.replace(/'/g, "\\'") || ''}', '${row[24]?.replace(/'/g, "\\'") || ''}', '${row[25]?.replace(/'/g, "\\'") || ''}')">★</span>
+                                <span class="message-icon" onclick="showTlcRemark('${row[19]?.replace(/'/g, "\\'") || ''}', '${row[24]?.replace(/'/g, "\\'") || ''}', '${row[25]?.replace(/'/g, "\\'") || ''}')"><i class="fas fa-message"></i></span>
                             </td>
                             <td class="our-crew">${row[17] || ''}</td>
                             <td class="our-crew">${row[18] || ''}</td>
@@ -1141,9 +1133,7 @@
                     if (criteria === 'OUR JURISDICTION' && (!signOffTime || !signOffStation)) {
                         row.classList.add('partial-submit');
                     } else {
-                        if (row) {
-                            row.remove();
-                        }
+                        row.remove();
                     }
                 }).catch((error) => {
                     document.getElementById('loading').innerText = '';
