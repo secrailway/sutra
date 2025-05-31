@@ -290,6 +290,7 @@
                             <option value="9-12">Show 9–12 Hrs Duty</option>
                             <option value="over-12">Show More than 12 Hrs Duty</option>
                             <option value="signoff">Show Sign Off Data Only</option>
+                            <option value="over-12-signoff">Show More than 12hrs Sign-Off Data</option>
                         </select>
                     </div>
                     <div>
@@ -332,6 +333,7 @@
         const SPREADSHEET_ID = '1Eob3yiujIi0sNtsPQr_HCvQtlybXnq6K11bm1wAcqAo';
         const SHEET_NAME = 'input';
         let autoRefreshInterval = null;
+        let currentData = [];
 
         async function fetchSheetData(section, fromDate, toDate, filter) {
             const range = `${SHEET_NAME}!A:AB`;
@@ -349,7 +351,6 @@
                     console.error('No data found in sheet');
                     document.getElementById('error').innerText = 'No data found in the sheet.';
                     loader.classList.add('hidden');
-                    console.log('Loader: hidden (no data)');
                     return [];
                 }
 
@@ -371,7 +372,7 @@
                     }
                     const sectionMatch = section === 'ALL' || !section || sectionValue === section;
                     const dateMatch = (!fromDate || !toDate || (rowDate >= fromDate && rowDate <= toDate));
-                    const signOffMatch = filter === 'signoff' ? signOffStation : filter !== 'signoff' ? !signOffStation : true;
+                    const signOffMatch = filter === 'signoff' || filter === 'over-12-signoff' ? signOffStation : true;
                     return sectionMatch && dateMatch && signOffMatch;
                 });
                 console.log(`Fetched rows for section ${section}, filter ${filter}, count: ${filteredRows.length}`);
@@ -402,7 +403,6 @@
                 console.error('Error fetching data:', error);
                 document.getElementById('error').innerText = `Error fetching data: ${error.message}`;
                 loader.classList.add('hidden');
-                console.log('Loader: hidden (fetch error)');
                 return [];
             }
         }
@@ -430,33 +430,25 @@
                 const endDateTime = endTime ? parseDateTime(endTime) : new Date();
                 const diffMs = endDateTime - startDateTime;
                 const diffHours = diffMs / (1000 * 60 * 60);
-                console.log(`Calculating total duty hours: Start=${startTime}, End=${endTime || 'Now'}, Hours=${diffHours.toFixed(2)}`);
+                console.log(`Calculating duty hours: Start=${startTime}, End=${endTime || 'Now'}, Hours=${diffHours.toFixed(2)}`);
                 return diffHours > 0 ? diffHours : 0;
             } catch (error) {
-                console.warn(`Error calculating total duty hours: ${error.message}, Start=${startTime}, End=${endTime}`);
+                console.warn(`Error calculating duty hours: ${error.message}, Start=${startTime}, End=${endTime}`);
                 return 0;
             }
         }
 
         function formatHoursToHHMM(hours) {
             if (hours <= 0) return '00:00';
-            let hrs = Math.floor(hours);
-            let mins = Math.round((hours - hrs) * 60);
-            if (mins === 60) {
-                hrs += 1;
-                mins = 0;
-            }
+            const hrs = Math.floor(hours);
+            const mins = Math.round((hours - hrs) * 60);
             return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
         }
 
         function getDutyHoursClass(dutyHours) {
-            if (dutyHours < 9) {
-                return 'duty-less-9';
-            } else if (dutyHours >= 9 && dutyHours < 12) {
-                return 'duty-9-12';
-            } else {
-                return 'duty-over-12';
-            }
+            if (dutyHours < 9) return 'duty-less-9';
+            if (dutyHours >= 9 && dutyHours < 12) return 'duty-9-12';
+            return 'duty-over-12';
         }
 
         function showBlackDotDetails(row) {
@@ -471,83 +463,83 @@
 
         function showYellowDotDetails(row) {
             let message = `CREW DUTY ANALYSIS\n\n`;
-            
             message += `Sign On Time: ${row.signOnTime || 'N/A'}\n`;
-            
-            let crewEntryDiffFromDuty = 'N/A';
+
+            let crewEntryDiff = 'N/A';
             if (row.signOnTime && row.crewEntryTime) {
                 const diff = calculateTotalDutyHours(row.signOnTime, row.crewEntryTime);
-                crewEntryDiffFromDuty = formatHoursToHHMM(diff);
+                crewEntryDiff = formatHoursToHHMM(diff);
             }
-            message += `Crew Entry Time: ${row.crewEntryTime || 'N/A'} (After ${crewEntryDiffFromDuty} hrs from duty)\n`;
+            message += `Crew Entry Time: ${row.crewEntryTime || 'N/A'} (After ${crewEntryDiff} hrs from duty)\n`;
 
-            let tlcRemarkDiffFromDuty = 'N/A';
-            let tlcRemarkDiffFromCrewEntry = 'N/A';
+            let tlcRemarkDiffFromDuty = 'N/A', tlcRemarkDiffFromCrew = 'N/A';
             if (row.signOnTime && row.tlcTimestamp) {
-                const diff = calculateTotalDutyHours(row.signOnTime, row.tlcTimestamp);
-                tlcRemarkDiffFromDuty = formatHoursToHHMM(diff);
+                tlcRemarkDiffFromDuty = formatHoursToHHMM(calculateTotalDutyHours(row.signOnTime, row.tlcTimestamp));
             }
             if (row.crewEntryTime && row.tlcTimestamp) {
-                const diff = calculateTotalDutyHours(row.crewEntryTime, row.tlcTimestamp);
-                tlcRemarkDiffFromCrewEntry = formatHoursToHHMM(diff);
+                tlcRemarkDiffFromCrew = formatHoursToHHMM(calculateTotalDutyHours(row.crewEntryTime, row.tlcTimestamp));
             }
-            message += `TLC Remark Time: ${row.tlcTimestamp || 'N/A'} (After ${tlcRemarkDiffFromDuty} hrs from duty, After ${tlcRemarkDiffFromCrewEntry} hrs from Crew Entry Time)\n`;
+            message += `TLC Remark Time: ${row.tlcTimestamp || 'N/A'} (After ${tlcRemarkDiffFromDuty} hrs from duty, ${tlcRemarkDiffFromCrew} hrs from Crew Entry)\n`;
 
-            let signOffEntryDiffFromDuty = 'N/A';
-            let signOffEntryDiffFromTlcRemark = 'N/A';
-            if (row.signOnTime && row.tlcTimestamp) {
-                const diff = calculateTotalDutyHours(row.signOnTime, row.tlcTimestamp);
-                signOffEntryDiffFromDuty = formatHoursToHHMM(diff);
-            }
-            if (row.tlcTimestamp && row.tlcTimestamp) {
-                const diff = calculateTotalDutyHours(row.tlcTimestamp, row.tlcTimestamp);
-                signOffEntryDiffFromTlcRemark = formatHoursToHHMM(diff);
-            }
-            message += `Sign Off Entry Time: ${row.tlcTimestamp || 'N/A'} (After ${signOffEntryDiffFromDuty} hrs from duty, After ${signOffEntryDiffFromTlcRemark} hrs from TLC Remark Time)\n`;
-
-            let cccRemarkDiffFromDuty = 'N/A';
-            let cccRemarkDiffFromTlcRemark = 'N/A';
+            let cccRemarkDiffFromDuty = 'N/A', cccRemarkDiffFromTlc = 'N/A';
             if (row.signOnTime && row.cccTimestamp) {
-                const diff = calculateTotalDutyHours(row.signOnTime, row.cccTimestamp);
-                cccRemarkDiffFromDuty = formatHoursToHHMM(diff);
+                cccRemarkDiffFromDuty = formatHoursToHHMM(calculateTotalDutyHours(row.signOnTime, row.cccTimestamp));
             }
             if (row.tlcTimestamp && row.cccTimestamp) {
-                const diff = calculateTotalDutyHours(row.tlcTimestamp, row.cccTimestamp);
-                cccRemarkDiffFromTlcRemark = formatHoursToHHMM(diff);
+                cccRemarkDiffFromTlc = formatHoursToHHMM(calculateTotalDutyHours(row.tlcTimestamp, row.cccTimestamp));
             }
-            message += `CCC Remark Time: ${row.cccTimestamp || 'N/A'} (After ${cccRemarkDiffFromDuty} hrs of duty, After ${cccRemarkDiffFromTlcRemark} hrs of TLC Remark Time)\n`;
+            message += `CCC Remark Time: ${row.cccTimestamp || 'N/A'} (After ${cccRemarkDiffFromDuty} hrs from duty, ${cccRemarkDiffFromTlc} hrs from TLC Remark)\n`;
 
-            let signOffDiffFromDuty = 'N/A';
+            let signOffDiff = 'N/A';
             if (row.signOnTime && row.signOffTime) {
-                const diff = calculateTotalDutyHours(row.signOnTime, row.signOffTime);
-                signOffDiffFromDuty = formatHoursToHHMM(diff);
+                signOffDiff = formatHoursToHHMM(calculateTotalDutyHours(row.signOnTime, row.signOffTime));
             }
-            message += `Sign Off Time: ${row.signOffTime || 'N/A'} (After ${signOffDiffFromDuty} hrs of duty)`;
+            message += `Sign Off Time: ${row.signOffTime || 'N/A'} (After ${signOffDiff} hrs from duty)`;
 
             alert(message);
         }
 
-        function renderTable(data, filter) {
+        function computeRowFingerprint(row) {
+            return JSON.stringify({
+                lpId: row.lpId, lpName: row.lpName, lpMobile: row.lpMobile, alpName: row.alpName,
+                signOnTime: row.signOnTime, crewEntryTime: row.crewEntryTime, trainNo: row.trainNo,
+                locoNo: row.locoNo, lastPassedStation: row.lastPassedStation, tlcTimestamp: row.tlcTimestamp,
+                currentLocation: row.currentLocation, assignLobby: row.assignLobby, cccTimestamp: row.cccTimestamp,
+                tlcRemark: row.tlcRemark, cccRemark: row.cccRemark, signOffTime: row.signOffTime,
+                signOffStation: row.signOffStation, tlcName: row.tlcName, tlcMobile: row.tlcMobile,
+                ccName: row.ccName, ccMobile: row.ccMobile
+            });
+        }
+
+        function isRowDifferent(newRow, oldRow) {
+            if (!oldRow) return true;
+            return computeRowFingerprint(newRow) !== computeRowFingerprint(oldRow);
+        }
+
+        function renderTable(data, filter, isInitialRender = false) {
             const tableHeader = document.getElementById('tableHeader');
             const tableBody = document.getElementById('reportTableBody');
             const loader = document.getElementById('loader');
-            tableHeader.innerHTML = '';
-            tableBody.innerHTML = '';
+            const tableContainer = document.querySelector('.table-container');
+            const scrollTop = tableContainer.scrollTop;
 
             try {
-                const headerRow = document.createElement('tr');
-                const baseHeaders = [
-                    'LP ID', 'LP Name', 'LP Mobile', 'ALP Name', 'Sign On Time', 'Crew Entry Time',
-                    'Train No', 'Loco No', 'Last Passed Station', 'Total Duty Hours', 'TLC Timestamp',
-                    'Current Location', 'Assign Lobby', 'CCC Timestamp', 'Remarks'
-                ];
-                const headers = filter === 'signoff' ? [...baseHeaders, 'Sign Off Time and Station'] : baseHeaders;
-                headers.forEach(header => {
-                    const th = document.createElement('th');
-                    th.textContent = header;
-                    headerRow.appendChild(th);
-                });
-                tableHeader.appendChild(headerRow);
+                if (isInitialRender || !tableHeader.innerHTML) {
+                    tableHeader.innerHTML = '';
+                    const headerRow = document.createElement('tr');
+                    const baseHeaders = [
+                        'LP ID', 'LP Name', 'LP Mobile', 'ALP Name', 'Sign On Time', 'Crew Entry Time',
+                        'Train No', 'Loco No', 'Last Passed Station', 'Total Duty Hours', 'TLC Timestamp',
+                        'Current Location', 'Assign Lobby', 'CCC Timestamp', 'Remarks'
+                    ];
+                    const headers = filter === 'signoff' || filter === 'over-12-signoff' ? [...baseHeaders, 'Sign Off Time and Station'] : baseHeaders;
+                    headers.forEach(header => {
+                        const th = document.createElement('th');
+                        th.textContent = header;
+                        headerRow.appendChild(th);
+                    });
+                    tableHeader.appendChild(headerRow);
+                }
 
                 let filteredData = data;
                 if (filter === '9-12') {
@@ -558,21 +550,47 @@
                 } else if (filter === 'over-12') {
                     filteredData = data.filter(row => {
                         const dutyHours = calculateTotalDutyHours(row.signOnTime, row.signOffTime);
-                        return dutyHours > 12;
+                        return dutyHours >= 12;
+                    });
+                } else if (filter === 'over-12-signoff') {
+                    filteredData = data.filter(row => {
+                        const dutyHours = calculateTotalDutyHours(row.signOnTime, row.signOffTime);
+                        return dutyHours >= 12 && row.signOffStation;
                     });
                 }
 
-                if (filteredData.length === 0) {
-                    console.warn('No data to display after filtering');
-                    tableBody.innerHTML = `<tr><td colspan="${headers.length}" class="px-3 py-2 text-center text-sm text-gray-500">No records found</td></tr>`;
-                } else {
-                    filteredData.forEach(row => {
-                        const tr = document.createElement('tr');
+                const existingRows = new Map();
+                Array.from(tableBody.querySelectorAll('tr')).forEach(row => {
+                    const lpId = row.querySelector('td:nth-child(1)')?.textContent || '';
+                    const signOnTime = row.querySelector('td:nth-child(5)')?.textContent || '';
+                    existingRows.set(`${lpId}_${signOnTime}`, row);
+                });
+
+                const fragment = document.createDocumentFragment();
+                const rowsToRemove = new Set(existingRows.keys());
+                let updateCount = 0;
+
+                if (filteredData.length === 0 && isInitialRender) {
+                    tableBody.innerHTML = `<tr><td colspan="${tableHeader.querySelector('tr').childElementCount}" class="px-3 py-2 text-center text-sm text-gray-500">No records found</td></tr>`;
+                    currentData = filteredData;
+                    tableContainer.scrollTop = scrollTop;
+                    return;
+                }
+
+                filteredData.forEach(row => {
+                    const rowKey = `${row.lpId}_${row.signOnTime}`;
+                    const existingRow = existingRows.get(rowKey);
+                    const oldRow = currentData.find(r => r.lpId === row.lpId && r.signOnTime === row.signOnTime);
+                    rowsToRemove.delete(rowKey);
+
+                    if (!existingRow || isRowDifferent(row, oldRow)) {
+                        updateCount++;
+                        const tr = existingRow || document.createElement('tr');
                         const totalDutyHours = calculateTotalDutyHours(row.signOnTime, row.signOffTime);
                         const className = getDutyHoursClass(totalDutyHours);
-                        tr.classList.add(className);
-                        console.log(`Row: LP ID=${row.lpId}, Duty Hours=${formatHoursToHHMM(totalDutyHours)} (${totalDutyHours.toFixed(2)} hrs), Class=${className}`);
-                        const signOffCombined = filter === 'signoff' && row.signOffTime && row.signOffStation ? `${row.signOffTime} - ${row.signOffStation}` : '';
+                        tr.className = className;
+                        console.log(`Updating row: LP ID=${row.lpId}, SignOn=${row.signOnTime}, Hours=${formatHoursToHHMM(totalDutyHours)}`);
+                        const signOffCombined = (filter === 'signoff' || filter === 'over-12-signoff') && row.signOffTime && row.signOffStation ? `${row.signOffTime} - ${row.signOffStation}` : '';
                         tr.innerHTML = `
                             <td>${row.lpId}</td>
                             <td>${row.lpName}</td>
@@ -592,19 +610,47 @@
                                 <span class="dot bg-black tlc-dot"></span>
                                 <span class="dot bg-yellow-400 ccc-dot"></span>
                             </td>
-                            ${filter === 'signoff' ? `<td>${signOffCombined}</td>` : ''}
+                            ${(filter === 'signoff' || filter === 'over-12-signoff') ? `<td>${signOffCombined}</td>` : ''}
                         `;
-                        tableBody.appendChild(tr);
-                        tr.querySelector('.tlc-dot').addEventListener('click', () => showBlackDotDetails(row));
-                        tr.querySelector('.ccc-dot').addEventListener('click', () => showYellowDotDetails(row));
-                    });
+
+                        tr.querySelector('.tlc-dot')?.replaceWith(tr.querySelector('.tlc-dot').cloneNode(true));
+                        tr.querySelector('.ccc-dot')?.replaceWith(tr.querySelector('.ccc-dot').cloneNode(true));
+                        tr.querySelector('.tlc-dot')?.addEventListener('click', () => showBlackDotDetails(row));
+                        tr.querySelector('.ccc-dot')?.addEventListener('click', () => showYellowDotDetails(row));
+
+                        if (!existingRow) {
+                            fragment.appendChild(tr);
+                        }
+                    }
+                });
+
+                rowsToRemove.forEach(rowKey => {
+                    const row = existingRows.get(rowKey);
+                    if (row) {
+                        row.remove();
+                        updateCount++;
+                        console.log(`Removed row: Key=${rowKey}`);
+                    }
+                });
+
+                if (fragment.childNodes.length > 0) {
+                    tableBody.appendChild(fragment);
+                    console.log(`Appended ${fragment.childNodes.length} new rows`);
                 }
+
+                if (updateCount > 0) {
+                    console.log(`Table updated with ${updateCount} changes`);
+                    currentData = filteredData;
+                } else {
+                    console.log('No table updates needed');
+                }
+
+                tableContainer.scrollTop = scrollTop;
             } catch (error) {
                 console.error('Error rendering table:', error);
                 document.getElementById('error').innerText = `Error rendering table: ${error.message}`;
             } finally {
                 loader.classList.add('hidden');
-                console.log('Loader: hidden (renderTable complete)');
             }
         }
 
@@ -618,28 +664,37 @@
                 const fromDate = document.getElementById('fromDate').value;
                 const toDate = document.getElementById('toDate').value;
                 const filter = document.getElementById('filter').value;
-                const loader = document.getElementById('loader');
-                const tableBody = document.getElementById('reportTableBody');
                 const errorDiv = document.getElementById('error');
 
                 if (!fromDate || !toDate) {
-                    console.warn('Auto-refresh skipped: Missing date inputs');
+                    console.log('Auto-refresh skipped: Missing date inputs');
+                    errorDiv.innerText = 'Please select both From Date and To Date for auto-refresh.';
                     return;
                 }
 
                 try {
-                    loader.classList.remove('hidden');
-                    console.log('Loader: shown (auto-refresh)');
-                    tableBody.innerHTML = '<tr><td colspan="16" class="px-3 py-2 text-center text-sm text-gray-500">Loading...</td></tr>';
+                    console.log('Auto-refresh: Fetching data...');
+                    const newData = await fetchSheetData(section, fromDate, toDate, filter);
 
-                    const data = await fetchSheetData(section, fromDate, toDate, filter);
-                    renderTable(data, filter);
+                    let hasChanges = false;
+                    if (newData.length !== currentData.length) {
+                        hasChanges = true;
+                    } else {
+                        hasChanges = newData.some((newRow, index) => {
+                            const oldRow = currentData[index];
+                            return isRowDifferent(newRow, oldRow);
+                        });
+                    }
+
+                    if (hasChanges) {
+                        console.log('Auto-refresh: Data changed, updating table');
+                        renderTable(newData, filter);
+                    } else {
+                        console.log('Auto-refresh: No data changes detected, skipping update');
+                    }
                 } catch (error) {
                     console.error('Auto-refresh error:', error);
                     errorDiv.innerText = `Auto-refresh error: ${error.message}`;
-                } finally {
-                    loader.classList.add('hidden');
-                    console.log('Loader: hidden (auto-refresh complete)');
                 }
             }, 30000);
             console.log('Started auto-refresh interval');
@@ -669,7 +724,7 @@
                 tableBody.innerHTML = '<tr><td colspan="15" class="px-3 py-2 text-center text-sm text-gray-500">Loading...</td></tr>';
 
                 const data = await fetchSheetData('ALL', fromDate, toDate, 'all');
-                renderTable(data, 'all');
+                renderTable(data, 'all', true);
                 startAutoRefresh();
             } catch (error) {
                 console.error('Error loading default data:', error);
@@ -693,7 +748,6 @@
             if (!document.getElementById('fromDate').value || !document.getElementById('toDate').value) {
                 errorDiv.innerText = 'Please select both From Date and To Date.';
                 loader.classList.add('hidden');
-                console.log('Loader: hidden (validation error)');
                 return;
             }
 
@@ -711,7 +765,7 @@
                 const filter = document.getElementById('filter').value;
 
                 const data = await fetchSheetData(section, fromDate, toDate, filter);
-                renderTable(data, filter);
+                renderTable(data, filter, true);
                 startAutoRefresh();
             } catch (error) {
                 console.error('Error submitting form:', error);
@@ -725,7 +779,6 @@
             }
         });
 
-        // Stop auto-refresh on form input changes
         ['section', 'fromDate', 'toDate', 'filter'].forEach(id => {
             document.getElementById(id).addEventListener('change', () => {
                 if (autoRefreshInterval) {

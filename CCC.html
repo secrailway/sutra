@@ -27,8 +27,8 @@
             alert('Unauthorized access. Please login first.');
             localStorage.removeItem('ccToken');
             window.location.href = 'tlc_cc_login.html';
-        }
-    </script>
+        }
+    </script>
     <style>
         * {
             margin: 0;
@@ -170,15 +170,16 @@
         th.our-crew:nth-child(6), td.our-crew:nth-child(6) { width: 50px; }
         th.our-crew:nth-child(7), td.our-crew:nth-child(7) { width: 50px; }
         th.our-crew:nth-child(8), td.our-crew:nth-child(8) { width: 80px; }
-        th.our-crew:nth-child(9), td.our-crew:nth-child(9) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
-        td.our-crew:nth-child(9) { background: #ffffff; color: #1f2937; z-index: 1; }
-        th.our-crew:nth-child(10), td.our-crew:nth-child(10) { width: 60px; }
+        th.our-crew:nth-child(9), td.our-crew:nth-child(9) { width: 80px; }
+        th.our-crew:nth-child(10), td.our-crew:nth-child(10) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
+        td.our-crew:nth-child(10) { background: #ffffff; color: #1f2937; z-index: 1; }
         th.our-crew:nth-child(11), td.our-crew:nth-child(11) { width: 60px; }
         th.our-crew:nth-child(12), td.our-crew:nth-child(12) { width: 60px; }
-        th.our-crew:nth-child(13), td.our-crew:nth-child(13) { width: 100px; }
-        th.our-crew:nth-child(14), td.our-crew:nth-child(14) { width: 80px; }
-        th.our-crew:nth-child(15), td.our-crew:nth-child(15) { width: 70px; }
+        th.our-crew:nth-child(13), td.our-crew:nth-child(13) { width: 60px; }
+        th.our-crew:nth-child(14), td.our-crew:nth-child(14) { width: 100px; }
+        th.our-crew:nth-child(15), td.our-crew:nth-child(15) { width: 80px; }
         th.our-crew:nth-child(16), td.our-crew:nth-child(16) { width: 70px; }
+        th.our-crew:nth-child(17), td.our-crew:nth-child(17) { width: 70px; }
         th.our-jurisdiction:nth-child(1), td.our-jurisdiction:nth-child(1) { width: 60px; }
         th.our-jurisdiction:nth-child(2), td.our-jurisdiction:nth-child(2) { width: 100px; }
         th.our-jurisdiction:nth-child(3), td.our-jurisdiction:nth-child(3) { width: 80px; }
@@ -187,34 +188,25 @@
         th.our-jurisdiction:nth-child(6), td.our-jurisdiction:nth-child(6) { width: 50px; }
         th.our-jurisdiction:nth-child(7), td.our-jurisdiction:nth-child(7) { width: 50px; }
         th.our-jurisdiction:nth-child(8), td.our-jurisdiction:nth-child(8) { width: 80px; }
-        th.our-jurisdiction:nth-child(9), td.our-jurisdiction:nth-child(9) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
-        td.our-jurisdiction:nth-child(9) { background: #ffffff; color: #1f2937; z-index: 1; }
-        th.our-jurisdiction:nth-child(10), td.our-jurisdiction:nth-child(10) { width: 60px; }
-        th.our-jurisdiction:nth-child(11), td.our-jurisdiction:nth-child(11) { width: 70px; }
-        th.our-jurisdiction:nth-child(12), td.our-jurisdiction:nth-child(12) { width: 120px; }
-        th.our-jurisdiction:nth-child(13), td.our-jurisdiction:nth-child(13) { width: 90px; }
-        th.our-jurisdiction:nth-child(14), td.our-jurisdiction:nth-child(14) { width: 80px; }
-        th.our-jurisdiction:nth-child(15), td.our-jurisdiction:nth-child(15) { width: 70px; }
+        th.our-jurisdiction:nth-child(9), td.our-jurisdiction:nth-child(9) { width: 80px; }
+        th.our-jurisdiction:nth-child(10), td.our-jurisdiction:nth-child(10) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
+        td.our-jurisdiction:nth-child(10) { background: #ffffff; color: #1f2937; z-index: 1; }
+        th.our-jurisdiction:nth-child(11), td.our-jurisdiction:nth-child(11) { width: 60px; }
+        th.our-jurisdiction:nth-child(12), td.our-jurisdiction:nth-child(12) { width: 70px; }
+        th.our-jurisdiction:nth-child(13), td.our-jurisdiction:nth-child(13) { width: 120px; }
+        th.our-jurisdiction:nth-child(14), td.our-jurisdiction:nth-child(14) { width: 90px; }
+        th.our-jurisdiction:nth-child(15), td.our-jurisdiction:nth-child(15) { width: 80px; }
+        th.our-jurisdiction:nth-child(16), td.our-jurisdiction:nth-child(16) { width: 70px; }
         td.our-crew:nth-child(2), td.our-crew:nth-child(4),
         td.our-jurisdiction:nth-child(2), td.our-jurisdiction:nth-child(4) {
             overflow-wrap: break-word;
             white-space: normal;
         }
-        td.our-crew:nth-child(10), td.our-crew:nth-child(11),
-        td.our-jurisdiction:nth-child(10) {
+        td.our-crew:nth-child(11), td.our-crew:nth-child(12),
+        td.our-jurisdiction:nth-child(11) {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-        }
-        .message-icon {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            font-size: 12px;
-            color: #eaf211;
-            cursor: pointer;
-            z-index: 2;
-            line-height: 1;
         }
         input[type="text"] {
             width: 100%;
@@ -390,15 +382,16 @@
             th.our-crew:nth-child(6), td.our-crew:nth-child(6) { width: 50px; }
             th.our-crew:nth-child(7), td.our-crew:nth-child(7) { width: 50px; }
             th.our-crew:nth-child(8), td.our-crew:nth-child(8) { width: 80px; }
-            th.our-crew:nth-child(9), td.our-crew:nth-child(9) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
-            td.our-crew:nth-child(9) { background: #ffffff; color: #1f2937; z-index: 1; }
-            th.our-crew:nth-child(10), td.our-crew:nth-child(10) { width: 60px; }
+            th.our-crew:nth-child(9), td.our-crew:nth-child(9) { width: 80px; }
+            th.our-crew:nth-child(10), td.our-crew:nth-child(10) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
+            td.our-crew:nth-child(10) { background: #ffffff; color: #1f2937; z-index: 1; }
             th.our-crew:nth-child(11), td.our-crew:nth-child(11) { width: 60px; }
             th.our-crew:nth-child(12), td.our-crew:nth-child(12) { width: 60px; }
-            th.our-crew:nth-child(13), td.our-crew:nth-child(13) { width: 100px; }
-            th.our-crew:nth-child(14), td.our-crew:nth-child(14) { width: 80px; }
-            th.our-crew:nth-child(15), td.our-crew:nth-child(15) { width: 70px; }
+            th.our-crew:nth-child(13), td.our-crew:nth-child(13) { width: 60px; }
+            th.our-crew:nth-child(14), td.our-crew:nth-child(14) { width: 100px; }
+            th.our-crew:nth-child(15), td.our-crew:nth-child(15) { width: 80px; }
             th.our-crew:nth-child(16), td.our-crew:nth-child(16) { width: 70px; }
+            th.our-crew:nth-child(17), td.our-crew:nth-child(17) { width: 70px; }
             th.our-jurisdiction:nth-child(1), td.our-jurisdiction:nth-child(1) { width: 60px; }
             th.our-jurisdiction:nth-child(2), td.our-jurisdiction:nth-child(2) { width: 100px; }
             th.our-jurisdiction:nth-child(3), td.our-jurisdiction:nth-child(3) { width: 80px; }
@@ -407,14 +400,15 @@
             th.our-jurisdiction:nth-child(6), td.our-jurisdiction:nth-child(6) { width: 50px; }
             th.our-jurisdiction:nth-child(7), td.our-jurisdiction:nth-child(7) { width: 50px; }
             th.our-jurisdiction:nth-child(8), td.our-jurisdiction:nth-child(8) { width: 80px; }
-            th.our-jurisdiction:nth-child(9), td.our-jurisdiction:nth-child(9) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
-            td.our-jurisdiction:nth-child(9) { background: #ffffff; color: #1f2937; z-index: 1; }
-            th.our-jurisdiction:nth-child(10), td.our-jurisdiction:nth-child(10) { width: 60px; }
-            th.our-jurisdiction:nth-child(11), td.our-jurisdiction:nth-child(11) { width: 70px; }
-            th.our-jurisdiction:nth-child(12), td.our-jurisdiction:nth-child(12) { width: 120px; }
-            th.our-jurisdiction:nth-child(13), td.our-jurisdiction:nth-child(13) { width: 90px; }
-            th.our-jurisdiction:nth-child(14), td.our-jurisdiction:nth-child(14) { width: 80px; }
-            th.our-jurisdiction:nth-child(15), td.our-jurisdiction:nth-child(15) { width: 70px; }
+            th.our-jurisdiction:nth-child(9), td.our-jurisdiction:nth-child(9) { width: 80px; }
+            th.our-jurisdiction:nth-child(10), td.our-jurisdiction:nth-child(10) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
+            td.our-jurisdiction:nth-child(10) { background: #ffffff; color: #1f2937; z-index: 1; }
+            th.our-jurisdiction:nth-child(11), td.our-jurisdiction:nth-child(11) { width: 60px; }
+            th.our-jurisdiction:nth-child(12), td.our-jurisdiction:nth-child(12) { width: 70px; }
+            th.our-jurisdiction:nth-child(13), td.our-jurisdiction:nth-child(13) { width: 120px; }
+            th.our-jurisdiction:nth-child(14), td.our-jurisdiction:nth-child(14) { width: 90px; }
+            th.our-jurisdiction:nth-child(15), td.our-jurisdiction:nth-child(15) { width: 80px; }
+            th.our-jurisdiction:nth-child(16), td.our-jurisdiction:nth-child(16) { width: 70px; }
             .ccc-dialog {
                 min-width: 80%;
                 max-width: 90%;
@@ -433,15 +427,16 @@
             th.our-crew:nth-child(6), td.our-crew:nth-child(6) { width: 50px; }
             th.our-crew:nth-child(7), td.our-crew:nth-child(7) { width: 50px; }
             th.our-crew:nth-child(8), td.our-crew:nth-child(8) { width: 80px; }
-            th.our-crew:nth-child(9), td.our-crew:nth-child(9) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
-            td.our-crew:nth-child(9) { background: #ffffff; color: #1f2937; z-index: 1; }
-            th.our-crew:nth-child(10), td.our-crew:nth-child(10) { width: 60px; }
+            th.our-crew:nth-child(9), td.our-crew:nth-child(9) { width: 80px; }
+            th.our-crew:nth-child(10), td.our-crew:nth-child(10) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
+            td.our-crew:nth-child(10) { background: #ffffff; color: #1f2937; z-index: 1; }
             th.our-crew:nth-child(11), td.our-crew:nth-child(11) { width: 60px; }
             th.our-crew:nth-child(12), td.our-crew:nth-child(12) { width: 60px; }
-            th.our-crew:nth-child(13), td.our-crew:nth-child(13) { width: 100px; }
-            th.our-crew:nth-child(14), td.our-crew:nth-child(14) { width: 80px; }
-            th.our-crew:nth-child(15), td.our-crew:nth-child(15) { width: 70px; }
+            th.our-crew:nth-child(13), td.our-crew:nth-child(13) { width: 60px; }
+            th.our-crew:nth-child(14), td.our-crew:nth-child(14) { width: 100px; }
+            th.our-crew:nth-child(15), td.our-crew:nth-child(15) { width: 80px; }
             th.our-crew:nth-child(16), td.our-crew:nth-child(16) { width: 70px; }
+            th.our-crew:nth-child(17), td.our-crew:nth-child(17) { width: 70px; }
             th.our-jurisdiction:nth-child(1), td.our-jurisdiction:nth-child(1) { width: 60px; }
             th.our-jurisdiction:nth-child(2), td.our-jurisdiction:nth-child(2) { width: 100px; }
             th.our-jurisdiction:nth-child(3), td.our-jurisdiction:nth-child(3) { width: 80px; }
@@ -450,14 +445,15 @@
             th.our-jurisdiction:nth-child(6), td.our-jurisdiction:nth-child(6) { width: 50px; }
             th.our-jurisdiction:nth-child(7), td.our-jurisdiction:nth-child(7) { width: 50px; }
             th.our-jurisdiction:nth-child(8), td.our-jurisdiction:nth-child(8) { width: 80px; }
-            th.our-jurisdiction:nth-child(9), td.our-jurisdiction:nth-child(9) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
-            td.our-jurisdiction:nth-child(9) { background: #ffffff; color: #1f2937; z-index: 1; }
-            th.our-jurisdiction:nth-child(10), td.our-jurisdiction:nth-child(10) { width: 60px; }
-            th.our-jurisdiction:nth-child(11), td.our-jurisdiction:nth-child(11) { width: 70px; }
-            th.our-jurisdiction:nth-child(12), td.our-jurisdiction:nth-child(12) { width: 120px; }
-            th.our-jurisdiction:nth-child(13), td.our-jurisdiction:nth-child(13) { width: 90px; }
-            th.our-jurisdiction:nth-child(14), td.our-jurisdiction:nth-child(14) { width: 80px; }
-            th.our-jurisdiction:nth-child(15), td.our-jurisdiction:nth-child(15) { width: 70px; }
+            th.our-jurisdiction:nth-child(9), td.our-jurisdiction:nth-child(9) { width: 80px; }
+            th.our-jurisdiction:nth-child(10), td.our-jurisdiction:nth-child(10) { width: 80px; position: sticky; right: 0; z-index: 2; background: #4b5563; color: #ffffff; }
+            td.our-jurisdiction:nth-child(10) { background: #ffffff; color: #1f2937; z-index: 1; }
+            th.our-jurisdiction:nth-child(11), td.our-jurisdiction:nth-child(11) { width: 60px; }
+            th.our-jurisdiction:nth-child(12), td.our-jurisdiction:nth-child(12) { width: 70px; }
+            th.our-jurisdiction:nth-child(13), td.our-jurisdiction:nth-child(13) { width: 120px; }
+            th.our-jurisdiction:nth-child(14), td.our-jurisdiction:nth-child(14) { width: 90px; }
+            th.our-jurisdiction:nth-child(15), td.our-jurisdiction:nth-child(15) { width: 80px; }
+            th.our-jurisdiction:nth-child(16), td.our-jurisdiction:nth-child(16) { width: 70px; }
             .ccc-dialog {
                 min-width: 90%;
                 max-height: 60vh;
@@ -770,11 +766,6 @@
             }
         }
 
-        function showTlcRemark(remark, tlcName, tlcMobile) {
-            const message = `TLC Remark: ${remark || 'No TLC Remark'}\nTLC Name: ${tlcName || 'N/A'}\nMobile Number: ${tlcMobile || 'N/A'}`;
-            alert(message);
-        }
-
         function calculateDutyHours(signOnTime) {
             if (!signOnTime) {
                 console.warn('Sign On Time is empty or undefined');
@@ -894,6 +885,7 @@
                         <th class="our-jurisdiction">LOCO No</th>
                         <th class="our-jurisdiction">Crew Timestamp</th>
                         <th class="our-jurisdiction">TLC Timestamp</th>
+                        <th class="our-jurisdiction">TLC Remark</th>
                         <th class="our-jurisdiction">Current Location</th>
                         <th class="our-jurisdiction">Total Duty Hours</th>
                         <th class="our-jurisdiction">CC L/H Remark</th>
@@ -912,6 +904,7 @@
                         <th class="our-crew">LOCO No</th>
                         <th class="our-crew">Crew Timestamp</th>
                         <th class="our-crew">TLC Timestamp</th>
+                        <th class="our-crew">TLC Remark</th>
                         <th class="our-crew">Current Location</th>
                         <th class="our-crew">Assign Lobby</th>
                         <th class="our-crew">Total Duty Hours</th>
@@ -959,6 +952,10 @@
                     const cccRemarkValue = userInput ? userInput.cccRemark : (row[21] || '');
                     const signOffTimeValue = userInput ? userInput.signOffTime : '';
                     const signOffStationValue = userInput ? userInput.signOffStation : '';
+                    const tlcRemark = row[19] || 'No TLC Remark';
+                    const tlcName = row[24] || 'N/A';
+                    const tlcMobile = row[25] || 'N/A';
+                    const tlcRemarkFormatted = `${tlcRemark}-(${tlcName}/${tlcMobile})`;
 
                     if (criteria === 'OUR JURISDICTION') {
                         tr.innerHTML = `
@@ -970,10 +967,8 @@
                             <td class="our-jurisdiction">${row[9] || ''}</td>
                             <td class="our-jurisdiction">${row[10] || ''}</td>
                             <td class="our-jurisdiction">${row[13] || ''}</td>
-                            <td class="our-jurisdiction">
-                                ${row[16] || ''}
-                                <span class="message-icon" onclick="showTlcRemark('${row[19]?.replace(/'/g, "\\'") || ''}', '${row[24]?.replace(/'/g, "\\'") || ''}', '${row[25]?.replace(/'/g, "\\'") || ''}')"><i class="fas fa-message"></i></span>
-                            </td>
+                            <td class="our-jurisdiction">${row[16] || ''}</td>
+                            <td class="our-jurisdiction">${tlcRemarkFormatted}</td>
                             <td class="our-jurisdiction">${row[17] || ''}</td>
                             <td class="our-jurisdiction">${dutyHours}</td>
                             <td class="our-jurisdiction"><textarea id="cccRemark_${index}" placeholder="Enter CCC Remark" oninput="validateRow(${index}, '${criteria}')">${cccRemarkValue}</textarea></td>
@@ -991,10 +986,8 @@
                             <td class="our-crew">${row[9] || ''}</td>
                             <td class="our-crew">${row[10] || ''}</td>
                             <td class="our-crew">${row[13] || ''}</td>
-                            <td class="our-crew">
-                                ${row[16] || ''}
-                                <span class="message-icon" onclick="showTlcRemark('${row[19]?.replace(/'/g, "\\'") || ''}', '${row[24]?.replace(/'/g, "\\'") || ''}', '${row[25]?.replace(/'/g, "\\'") || ''}')"><i class="fas fa-message"></i></span>
-                            </td>
+                            <td class="our-crew">${row[16] || ''}</td>
+                            <td class="our-crew">${tlcRemarkFormatted}</td>
                             <td class="our-crew">${row[17] || ''}</td>
                             <td class="our-crew">${row[18] || ''}</td>
                             <td class="our-crew">${dutyHours}</td>
