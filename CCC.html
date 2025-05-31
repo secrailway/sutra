@@ -475,7 +475,8 @@
         <label for="criteria">Select Criteria:</label>
         <select id="criteria">
             <option value="OUR JURISDICTION">OUR JURISDICTION</option>
-            <option value="OUR CREW">OUR CREW</option> 
+            <option value="OUR CREW">OUR CREW</option>
+            <option value="ALL CREW">ALL CREW</option>
         </select>
         <label for="lobby">Lobby:</label>
         <select id="lobby">
@@ -518,8 +519,8 @@
     </div>
 
     <script>
-        const CLIENT_ID = '547073147985-ap3u2ed867imq6q810gjc82jfsme6tqm.apps.googleusercontent.com';
-        const API_KEY = 'AIzaSyBf3C_Ly8bIF_f-t30wE2e7cMsc2hz0co0';
+        const CLIENT_ID = '743949131355-ugne7v9gjbtq00454ujqh1hhngmaujet.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyB8c518fLKJvJhCLtN_JlHFNFCb5WSy-5s';
         const SPREADSHEET_ID = '1Eob3yiujIi0sNtsPQr_HCvQtlybXnq6K11bm1wAcqAo';
         const TLC_LOG_SPREADSHEET_ID = '1IqZReufdD1EL6B8m7S5O2oJGBwXN8NnG5X1-slj4pLk';
         const SHEET_NAME = 'input';
@@ -930,6 +931,8 @@
                     } else if (criteria === 'OUR JURISDICTION') {
                         const assignLobby = row[18] || '';
                         criteriaMatch = assignLobby === lobby;
+                    } else if (criteria === 'ALL CREW') {
+                        criteriaMatch = true; // Include all rows regardless of lobby
                     }
                     return dateMatch && criteriaMatch;
                 });
