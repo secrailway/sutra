@@ -479,7 +479,7 @@
             <option value="ALL CREW">ALL CREW</option>
         </select>
         <label for="lobby">Lobby:</label>
-        <select id="lobby">
+        <select id="lobby" onchange="updateShiftOptions()">
             <option value="AKT">AKT</option>
             <option value="BJRI">BJRI</option>
             <option value="BRJN">BRJN</option>
@@ -499,9 +499,6 @@
         <label for="shift">Shift:</label>
         <select id="shift">
             <option value="" disabled selected>Select Shift</option>
-            <option value="P1 (06:00 to 14:00)">P1 (06:00 to 14:00)</option>
-            <option value="P2 (14:00 to 22:00)">P2 (14:00 to 22:00)</option>
-            <option value="P3 (22:00 to 06:00)">P3 (22:00 to 06:00)</option>
         </select>
         <label for="fromDate">From Date:</label>
         <input type="date" id="fromDate">
@@ -514,7 +511,7 @@
     <div class="table-container">
         <table id="reportTable">
             <thead id="tableHeader"></thead>
-            <tbody id="reportBody"></tbody>
+            <tbody id="reportBuffer"></tbody>
         </table>
     </div>
 
@@ -532,6 +529,37 @@
         let cccData = [];
         let customCcc = null;
         let autoRefreshInterval = null;
+
+        function updateShiftOptions() {
+            const lobby = document.getElementById('lobby').value;
+            const shiftSelect = document.getElementById('shift');
+            
+            // Clear existing options
+            shiftSelect.innerHTML = '<option value="" disabled selected>Select Shift</option>';
+            
+            // Define shift options
+            const defaultShifts = [
+                { value: 'P1 (06:00 to 14:00)', text: 'P1 (06:00 to 14:00)' },
+                { value: 'P2 (14:00 to 22:00)', text: 'P2 (14:00 to 22:00)' },
+                { value: 'P3 (22:00 to 06:00)', text: 'P3 (22:00 to 06:00)' }
+            ];
+            const bjriShifts = [
+                { value: 'P1 (00:00 to 08:00)', text: 'P1 (00:00 to 08:00)' },
+                { value: 'P2 (08:00 to 16:00)', text: 'P2 (08:00 to 16:00)' },
+                { value: 'P3 (16:00 to 00:00)', text: 'P3 (16:00 to 00:00)' }
+            ];
+            
+            // Select shifts based on lobby
+            const shifts = lobby === 'BJRI' ? bjriShifts : defaultShifts;
+            
+            // Populate shift options
+            shifts.forEach(shift => {
+                const option = document.createElement('option');
+                option.value = shift.value;
+                option.text = shift.text;
+                shiftSelect.appendChild(option);
+            });
+        }
 
         async function loadCccData() {
             try {
@@ -645,6 +673,7 @@
 
         document.getElementById('lobby').addEventListener('change', function() {
             populateCccDropdown();
+            updateShiftOptions();
         });
 
         document.getElementById('cccName').addEventListener('change', function() {
@@ -850,7 +879,7 @@
             autoRefreshInterval = setInterval(() => showReport(false), 30000);
             console.log('Started auto-refresh interval');
 
-            const tbody = document.getElementById('reportBody');
+            const tbody = document.getElementById('reportBuffer');
             const userInputs = [];
             Array.from(tbody.getElementsByTagName('tr')).forEach((row, index) => {
                 const cccRemark = document.getElementById(`cccRemark_${index}`)?.value.trim() || '';
@@ -869,7 +898,7 @@
                 document.getElementById('loading').innerText = '';
                 const values = response.result.values || [];
                 const thead = document.getElementById('tableHeader');
-                const tbody = document.getElementById('reportBody');
+                const tbody = document.getElementById('reportBuffer');
                 thead.innerHTML = '';
                 tbody.innerHTML = '';
                 document.getElementById('error').innerText = '';
