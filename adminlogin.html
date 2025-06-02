@@ -251,10 +251,16 @@
             const errorMessage = document.getElementById('errorMessage');
             const loginButton = document.querySelector('.login-button');
 
-            const validUserId = 'SRDEEBSPOP@321';
-            const validPassword = 'SRDEE@456';
+            const validCredentials = [
+                { userId: 'SRDEEBSPOP@321', password: 'SRDEE@456' },
+                { userId: 'ADEEOPBSP', password: 'ADEEOP@456' }
+            ];
 
-            if (userId !== validUserId || password !== validPassword) {
+            const isValid = validCredentials.some(cred => 
+                userId === cred.userId && password === cred.password
+            );
+
+            if (!isValid) {
                 errorMessage.style.display = 'block';
                 return;
             }
