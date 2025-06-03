@@ -255,7 +255,7 @@
         </div>
         <div class="button-container">
             <button class="action-button" id="generate-button" onclick="generateReport()">Generate Report</button>
-            <button class="action-button" onclick="printReport()">Print</button>
+            <button class="action-button" onclick="printReport()">Download Report</button>
         </div>
         <div id="error" class="error"></div>
         <div id="report"></div>
@@ -642,7 +642,7 @@
             errorDiv.innerText = '';
 
             if (filteredRows.length === 0) {
-                errorDiv.innerText = 'No rows to print. Please generate a report first.';
+                errorDiv.innerText = 'No rows to Download. Please generate a report first.';
                 console.error('No rows to print');
                 return;
             }
