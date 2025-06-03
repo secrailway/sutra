@@ -12,7 +12,7 @@
     <script src="https://accounts.google.com/gsi/client?v=2025052205"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-     <script>
+    <script>
         // Token validation
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -26,8 +26,8 @@
             alert('Unauthorized access. Please login first.');
             localStorage.removeItem('tlcToken');
             window.location.href = 'tlc_cc_login.html';
-        }
-       </script>
+        }
+    </script>
     <style>
         * {
             margin: 0;
@@ -399,6 +399,7 @@
         <label for="toDate">To Date:</label>
         <input type="date" id="toDate">
         <button onclick="showReport(true)">Show Report</button>
+        <button onclick="window.location.href='printreport.html'">GENERATE LONG HOURS MEMO</button>
     </div>
     <div id="error" class="error"></div>
     <div id="loading" class="loading"></div>
@@ -434,8 +435,8 @@
             allHours: Object.keys(window).filter(k => k.toLowerCase().includes('hours'))
         });
 
-        const CLIENT_ID = '547073147985-ap3u2ed867imq6q810gjc82jfsme6tqm.apps.googleusercontent.com';
-        const API_KEY = 'AIzaSyBf3C_Ly8bIF_f-t30wE2e7cMsc2hz0co0';
+        const CLIENT_ID = '743949131355-ugne7v9gjbtq00454ujqh1hhngmaujet.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyB8c518fLKJvJhCLtN_JlHFNFCb5WSy-5s';
         const SPREADSHEET_ID = '1Eob3yiujIi0sNtsPQr_HCvQtlybXnq6K11bm1wAcqAo';
         const TLC_LOG_SPREADSHEET_ID = '1IqZReufdD1EL6B8m7S5O2oJGBwXN8NnG5X1-slj4pLk';
         const SHEET_NAME = 'input';
