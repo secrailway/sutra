@@ -1079,106 +1079,114 @@
             }
         }
 
-        function submitData(rowIndex, index, criteria) {
-            if (!tokenClient) {
-                document.getElementById('error').innerText = 'Google API not initialized. Please wait and try again.';
-                setTimeout(() => submitData(rowIndex, index, criteria), 2000);
-                return;
-            }
+       function submitData(rowIndex, index, criteria) {
+    if (!tokenClient) {
+        document.getElementById('error').innerText = 'Google API not initialized. Please wait and try again.';
+        setTimeout(() => submitData(rowIndex, index, criteria), 2000);
+        return;
+    }
 
-            if (!accessToken) {
-                document.getElementById('error').innerText = 'Not authenticated. Requesting access...';
-                tokenClient.requestAccessToken();
-                setTimeout(() => submitData(rowIndex, index, criteria), 3000);
-                return;
-            }
+    if (!accessToken) {
+        document.getElementById('error').innerText = 'Not authenticated. Requesting access...';
+        tokenClient.requestAccessToken();
+        setTimeout(() => submitData(rowIndex, index, criteria), 3000);
+        return;
+    }
 
-            const cccRemark = document.getElementById(`cccRemark_${index}`).value.trim();
-            let signOffTimeInput = document.getElementById(`signOffTime_${index}`).value;
-            let signOffStation = document.getElementById(`signOffStation_${index}`).value.trim().toUpperCase();
-            let signOffTime = '';
-            const cccName = document.getElementById('cccName').value;
-            const cccMobile = getCccMobile(cccName);
+    const cccRemark = document.getElementById(`cccRemark_${index}`).value.trim();
+    let signOffTimeInput = document.getElementById(`signOffTime_${index}`).value;
+    let signOffStation = document.getElementById(`signOffStation_${index}`).value.trim().toUpperCase();
+    let signOffTime = '';
+    const cccName = document.getElementById('cccName').value;
+    const cccMobile = getCccMobile(cccName);
 
-            if (!cccRemark) {
-                document.getElementById('error').innerText = 'Please fill CCC Remark.';
-                return;
-            }
+    if (!cccRemark) {
+        document.getElementById('error').innerText = 'Please fill CCC Remark.';
+        return;
+    }
 
-            if (signOffTimeInput) {
-                const date = new Date(signOffTimeInput);
-                if (isNaN(date.getTime())) {
-                    document.getElementById('error').innerText = 'Invalid Sign Off Time format. Please use a valid date and time.';
-                    return;
-                }
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const year = date.getFullYear();
-                const hours = date.getHours().toString().padStart(2, '0');
-                const minutes = date.getMinutes().toString().padStart(2, '0');
-                const seconds = date.getSeconds().toString().padStart(2, '0');
-                signOffTime = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
-            }
-
-            try {
-                const row = document.getElementById(`row_${index}`);
-                let cccTimestamp = row.getAttribute('data-ccc-timestamp') || '';
-
-                if (!cccTimestamp) {
-                    const now = new Date();
-                    const istOptions = { timeZone: 'Asia/Kolkata' };
-                    const day = now.getDate().toString().padStart(2, '0');
-                    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-                    const year = now.getFullYear();
-                    const hours = now.getHours().toString().padStart(2, '0');
-                    const minutes = now.getMinutes().toString().padStart(2, '0');
-                    const seconds = now.getSeconds().toString().padStart(2, '0');
-                    cccTimestamp = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
-                }
-
-                document.getElementById('loading').innerText = 'Updating data...';
-                gapi.client.sheets.spreadsheets.values.batchUpdate({
-                    spreadsheetId: SPREADSHEET_ID,
-                    resource: {
-                        valueInputOption: 'RAW',
-                        data: [
-                            {
-                                range: `${SHEET_NAME}!U${rowIndex}:X${rowIndex}`,
-                                values: [[cccTimestamp, cccRemark, signOffTime, signOffStation]]
-                            },
-                            {
-                                range: `${SHEET_NAME}!AA${rowIndex}:BB${rowIndex}`,
-                                values: [[cccName, cccMobile]]
-                            }
-                        ]
-                    }
-                }).then(() => {
-                    document.getElementById('loading').innerText = '';
-                    alert('Data updated successfully!');
-                    row.setAttribute('data-ccc-timestamp', cccTimestamp);
-                    if (criteria === 'OUR JURISDICTION' && (!signOffTime || !signOffStation)) {
-                        row.classList.add('partial-submit');
-                    } else {
-                        row.remove();
-                    }
-                }).catch((error) => {
-                    document.getElementById('loading').innerText = '';
-                    document.getElementById('error').innerText = `Error updating data: ${error.result?.error?.message || error.message}`;
-                    if (error.status === 401 || error.status === 403) {
-                        document.getElementById('error').innerText += ' (Invalid or expired token. Re-authenticating...)';
-                        tokenClient.requestAccessToken();
-                        setTimeout(() => submitData(rowIndex, index, criteria), 3000);
-                    }
-                    console.error('submitData error:', error);
-                });
-            } catch (error) {
-                document.getElementById('loading').innerText = '';
-                document.getElementById('error').innerText = `Error formatting timestamp: ${error.message}`;
-                console.error('submitData timestamp error:', error);
-            }
+    if (signOffTimeInput) {
+        const date = new Date(signOffTimeInput);
+        if (isNaN(date.getTime())) {
+            document.getElementById('error').innerText = 'Invalid Sign Off Time format. Please use a valid date and time.';
+            return;
         }
 
-        window.onload = initGoogleAPI;
+        // Check if the sign off time is in the future
+        const now = new Date();
+        if (date > now) {
+            alert('Warning: Sign Off Date and Time cannot be in the future. Please enter a valid past or present time.');
+            document.getElementById('error').innerText = 'Sign Off Date and Time cannot be in the future.';
+            return;
+        }
+
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const seconds = date.getSeconds().toString().padStart(2, '0');
+        signOffTime = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+    }
+
+    try {
+        const row = document.getElementById(`row_${index}`);
+        let cccTimestamp = row.getAttribute('data-ccc-timestamp') || '';
+
+        if (!cccTimestamp) {
+            const now = new Date();
+            const day = now.getDate().toString().padStart(2, '0');
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const year = now.getFullYear();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            cccTimestamp = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+        }
+
+        document.getElementById('loading').innerText = 'Updating data...';
+        gapi.client.sheets.spreadsheets.values.batchUpdate({
+            spreadsheetId: SPREADSHEET_ID,
+            resource: {
+                valueInputOption: 'RAW',
+                data: [
+                    {
+                        range: `${SHEET_NAME}!U${rowIndex}:X${rowIndex}`,
+                        values: [[cccTimestamp, cccRemark, signOffTime, signOffStation]]
+                    },
+                    {
+                        range: `${SHEET_NAME}!AA${rowIndex}:BB${rowIndex}`,
+                        values: [[cccName, cccMobile]]
+                    }
+                ]
+            }
+        }).then(() => {
+            document.getElementById('loading').innerText = '';
+            alert('Data updated successfully!');
+            row.setAttribute('data-ccc-timestamp', cccTimestamp);
+            if (criteria === 'OUR JURISDICTION' && (!signOffTime || !signOffStation)) {
+                row.classList.add('partial-submit');
+            } else {
+                row.remove();
+            }
+        }).catch((error) => {
+            document.getElementById('loading').innerText = '';
+            document.getElementById('error').innerText = `Error updating data: ${error.result?.error?.message || error.message}`;
+            if (error.status === 401 || error.status === 403) {
+                document.getElementById('error').innerText += ' (Invalid or expired token. Re-authenticating...)';
+                tokenClient.requestAccessToken();
+                setTimeout(() => submitData(rowIndex, index, criteria), 3000);
+            }
+            console.error('submitData error:', error);
+        });
+    } catch (error) {
+        document.getElementById('loading').innerText = '';
+        document.getElementById('error').innerText = `Error formatting timestamp: ${error.message}`;
+        console.error('submitData timestamp error:', error);
+    }
+}
+
+window.onload = initGoogleAPI;
     </script>
 </body>
 </html>
