@@ -798,37 +798,43 @@
         }
 
         function calculateDutyHours(signOnTime) {
-            if (!signOnTime) {
-                console.warn('Sign On Time is empty or undefined');
-                return 'N/A';
-            }
-            try {
-                const [datePart, timePart] = signOnTime.split(' ');
-                if (!datePart || !timePart) {
-                    console.warn(`Invalid Sign On Time format: ${signOnTime}`);
-                    return 'N/A';
-                }
-                const [day, month, year] = datePart.split('/').map(Number);
-                const [hours, minutes, seconds] = timePart.split(':').map(Number);
-                if (isNaN(day) || isNaN(month) || isNaN(year) || isNaN(hours) || isNaN(minutes) || isNaN(seconds)) {
-                    console.warn(`Invalid date/time components in: ${signOnTime}`);
-                    return 'N/A';
-                }
-                const signOnDateTime = new Date(year, month - 1, day, hours, minutes, seconds);
-                if (isNaN(signOnDateTime.getTime())) {
-                    console.warn(`Invalid Date object created from: ${signOnTime}`);
-                    return 'N/A';
-                }
-                const now = new Date();
-                const diffMs = now - signOnDateTime;
-                const diffHours = diffMs / (1000 * 60 * 60);
-                console.log(`Calculating duty hours: Sign On=${signOnTime}, Now=${now.toISOString()}, Hours=${diffHours.toFixed(2)}`);
-                return diffHours >= 0 ? diffHours.toFixed(2) : 'N/A';
-            } catch (error) {
-                console.warn(`Error calculating duty hours: ${error.message}, Sign On=${signOnTime}`);
-                return 'N/A';
-            }
+    if (!signOnTime) {
+        console.warn('Sign On Time is empty or undefined');
+        return 'N/A';
+    }
+    try {
+        const [datePart, timePart] = signOnTime.split(' ');
+        if (!datePart || !timePart) {
+            console.warn(`Invalid Sign On Time format: ${signOnTime}`);
+            return 'N/A';
         }
+        const [day, month, year] = datePart.split('/').map(Number);
+        const [hours, minutes, seconds] = timePart.split(':').map(Number);
+        if (isNaN(day) || isNaN(month) || isNaN(year) || isNaN(hours) || isNaN(minutes) || isNaN(seconds)) {
+            console.warn(`Invalid date/time components in: ${signOnTime}`);
+            return 'N/A';
+        }
+        const signOnDateTime = new Date(year, month - 1, day, hours, minutes, seconds);
+        if (isNaN(signOnDateTime.getTime())) {
+            console.warn(`Invalid Date object created from: ${signOnTime}`);
+            return 'N/A';
+        }
+        const now = new Date();
+        const diffMs = now - signOnDateTime;
+        if (diffMs < 0) {
+            console.warn(`Sign On Time is in the future: ${signOnTime}`);
+            return 'N/A';
+        }
+        const totalMinutes = Math.floor(diffMs / (1000 * 60));
+        const dutyHours = Math.floor(totalMinutes / 60);
+        const dutyMinutes = totalMinutes % 60;
+        console.log(`Calculating duty hours: Sign On=${signOnTime}, Now=${now.toISOString()}, Hours=${dutyHours}, Minutes=${dutyMinutes}`);
+        return `${dutyHours.toString().padStart(2, '0')}:${dutyMinutes.toString().padStart(2, '0')}`;
+    } catch (error) {
+        console.warn(`Error calculating duty hours: ${error.message}, Sign On=${signOnTime}`);
+        return 'N/A';
+    }
+}
 
         async function showReport(isManualClick = false) {
             const criteria = document.getElementById('criteria').value;
