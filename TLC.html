@@ -793,7 +793,7 @@
                     const rowIndex = values.indexOf(row) + 1;
                     const forwardCount = parseInt(row[28]) || 0;
                     const isForwarded = forwardCount > 0;
-                    const isMaxForwarded = forwardCount >= 2;
+                    const isMaxForwarded = forwardCount >= 4;
                     const dutyHours = calculateDutyHours(row[7], currentTime);
                     const tr = document.createElement('tr');
                     tr.id = `row_${index}`;
@@ -956,8 +956,8 @@
                 const newForwardCount = forwardCount + 1;
                 console.log(`AC${rowIndex}: forwardCount=${forwardCount}, newForwardCount=${newForwardCount}`);
 
-                if (newForwardCount > 2) {
-                    document.getElementById('error').innerText = 'Maximum forward limit (2) reached for this row.';
+                if (newForwardCount > 4) {
+                    document.getElementById('error').innerText = 'Maximum forward limit (4) reached for this row.';
                     document.getElementById('loading').innerText = '';
                     console.log('forwardData failed: max forwards reached');
                     return;
@@ -995,7 +995,7 @@
                 } else {
                     console.error(`Row row_${index} not found`);
                 }
-                if (newForwardCount >= 2) {
+                if (newForwardCount >= 4) {
                     document.getElementById(`currentLocation_${index}`).disabled = true;
                     document.getElementById(`assignLobby_${index}`).disabled = true;
                     document.getElementById(`tlcRemark_${index}`).disabled = true;
