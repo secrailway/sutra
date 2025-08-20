@@ -274,6 +274,8 @@
                 <option value="DN">DN</option>
                 <option value="UP CIC">UP CIC</option>
                 <option value="DN CIC">DN CIC</option>
+                <option value="OTHER DIVISION">OTHER DIVISION</option>
+                
             </select>
 
             <label for="last-passed-station">LAST PASSED STATION CODE</label>
@@ -285,6 +287,7 @@
                 <option value="BSP-CPH-DIPKA">BSP-CPH-DIPKA</option>
                 <option value="SGRD-RIG-JSG">SGRD-RIG-JSG</option>
                 <option value="CIC">CIC</option>
+                <option value="TLC-OTHER-DIV">TLC-OTHER-DIV</option>
             </select>
             <input type="hidden" id="timestamp" name="timestamp">
             <div class="submission-info">
@@ -514,6 +517,13 @@
                 sessionStorage.removeItem('userId');
                 sessionStorage.removeItem('userName');
                 window.location.href = 'sutra-login.html';
+            });
+
+            // Add event listener for direction change
+            document.getElementById("direction").addEventListener("change", function() {
+                if (this.value === "OTHER DIVISION") {
+                    document.getElementById("ml-cic").value = "TLC-OTHER-DIV";
+                }
             });
         });
     </script>
