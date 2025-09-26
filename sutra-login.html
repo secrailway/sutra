@@ -4,21 +4,187 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SUTRA LOGIN</title>
-    <link rel="stylesheet" href="sutra-login.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-image: url('14.jpg');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            padding: 20px;
+        }
+
+        .login-container {
+            background-color: rgba(255, 255, 255, 0.674);
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .top-right-image {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: auto;
+            cursor: pointer;
+        }
+
+        .login-container h2 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: rgb(0, 47, 255);
+            font-size: 28px;
+            font-family: 'Georgia', serif;
+            font-weight: bold;
+        }
+
+        .login-container input[type="text"], 
+        .login-container input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .login-container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .login-container button:hover {
+            background-color: #0056b3;
+        }
+
+        #message {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .bilaspur-division {
+            background-color: rgba(255, 255, 255, 0);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: rgba(0, 32, 174, 0.608);
+            position: absolute;
+            bottom: 0px;
+            right: 0px;
+            text-align: center;
+        }
+
+        .forgot-password {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            color: blue;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-    
     <div class="login-container">
-        <img src="1.png" alt="Logo" class="top-right-image"> <!-- Add this line -->
+        <img src="1.png" alt="Logo" class="top-right-image">
         <h2>SUTRA LOGIN</h2>
-        <input type="text" id="userId" placeholder="Login ID" required pattern=".{7,8}" title="ID must be like ex.BSP1234" oninput="this.value = this.value.toUpperCase().replace(/\s/g, '')">
-        <input type="password" id="password" placeholder="Password" required>
-        <button type="button" onclick="login()">Login</button>
-        <div id="message"></div> <!-- Added to display success/error messages -->
-        <a href="login-problem.html" class="forgot-password">Forgot Password?</a> <!-- Added Forgot Password link -->
-        <div class="bilaspur-division">BILASPUR DIVISION</div> <!-- Added text -->
+        <form id="loginForm">
+            <input type="text" id="userId" placeholder="User ID" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <a href="#" class="forgot-password"></a>
+        <div id="message"></div>
+        <div class="bilaspur-division">BILASPUR DIVISION</div>
     </div>
 
-    <script src="sutra-login.js"></script> <!-- Link to your JavaScript file -->
+    <script>
+        let users = [];
+
+        document.addEventListener('DOMContentLoaded', loadCSV);
+
+        async function loadCSV() {
+            try {
+                const response = await fetch('sutra-login-html.csv', { redirect: 'follow' });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}, URL: sutra-login-html.csv`);
+                }
+                const text = await response.text();
+                console.log('Raw CSV data:', text);
+                users = parseCSV(text);
+                console.log('Parsed Users:', users);
+            } catch (error) {
+                console.error('Error loading CSV file:', error);
+                document.getElementById('message').innerText = 'Failed to load user data. Please try again later.';
+            }
+        }
+
+        function parseCSV(text) {
+            const rows = text.split('\n').filter(row => row.trim() !== '');
+            const users = [];
+            for (let i = 1; i < rows.length; i++) { // Skip header row
+                const columns = rows[i].split(',').map(col => col.trim());
+                if (columns.length >= 3) {
+                    users.push({
+                        userId: columns[0].toUpperCase(),
+                        name: columns[1],
+                        password: columns[2]
+                    });
+                }
+            }
+            return users;
+        }
+
+        document.querySelector('.top-right-image').addEventListener('click', function() {
+            window.location.href = 'index.html';
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            login();
+        });
+
+        function login() {
+            const userId = document.getElementById('userId').value.trim().toUpperCase();
+            const password = document.getElementById('password').value.trim();
+            const message = document.getElementById('message');
+
+            console.log('Attempting login with:', { userId, password });
+            console.log('Available users:', users);
+
+            const user = users.find(u => {
+                console.log(`Comparing: ${u.userId} === ${userId} && ${u.password} === ${password}`);
+                return u.userId === userId && u.password === password;
+            });
+
+            if (user) {
+                sessionStorage.setItem('isLoggedIn', 'true');
+                sessionStorage.setItem('userId', user.userId);
+                sessionStorage.setItem('userName', user.name);
+                message.style.color = 'green';
+                message.innerText = 'Login successful!';
+                window.location.href = 'sutra-form.html';
+            } else {
+                message.style.color = 'red';
+                message.innerText = 'Invalid User ID or Password!';
+            }
+        }
+    </script>
 </body>
 </html>

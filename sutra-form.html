@@ -187,8 +187,8 @@
 
         /* Submission info message styling */
         .submission-info {
-            background: linear-gradient(135deg, #ffe6e6 0%, #ffffff 100%); /* Gradient from light red to white */
-            border: 2px solid #dc3545; /* Red border */
+            background: linear-gradient(135deg, #ffe6e6 0%, #ffffff 100%);
+            border: 2px solid #dc3545;
             padding: 15px;
             margin-bottom: 20px;
             border-radius: 8px;
@@ -198,16 +198,15 @@
             line-height: 1.6;
             text-align: left;
             font-family: 'Lora', serif;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Enhanced shadow */
-            transition: transform 0.2s ease, box-shadow 0.2s ease; /* Smooth hover effect */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .submission-info:hover {
-            transform: scale(1.02); /* Slight scale-up on hover */
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Stronger shadow on hover */
+            transform: scale(1.02);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
         }
 
-        /* Highlight 'My Submissions' and hamburger icon in red */
         .submission-info::before {
             content: "'My Submissions' ";
             color: #dc3545;
@@ -243,6 +242,7 @@
         <h3 id="welcome-message"></h3>
         
         <form id="sutra-form" action="#" method="post" autocomplete="off">
+            <input type="hidden" id="user-id" name="user-id">
             <label for="lp-id">ENTER LP ID</label>
             <input type="text" id="lp-id" name="lp-id" placeholder="ex. BSP3637" required pattern=".{7,8}" title="LP ID must be like ex.BSP1234" oninput="this.value = this.value.toUpperCase().replace(/\s/g, '')">
             <div id="lp-name"></div>
@@ -275,7 +275,6 @@
                 <option value="UP CIC">UP CIC</option>
                 <option value="DN CIC">DN CIC</option>
                 <option value="OTHER DIVISION">OTHER DIVISION</option>
-                
             </select>
 
             <label for="last-passed-station">LAST PASSED STATION CODE</label>
@@ -303,16 +302,35 @@
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
+        // Check if user is logged in
         if (sessionStorage.getItem('isLoggedIn') !== 'true') {
             window.location.href = 'sutra-login.html';
         }
 
+        // Logout function
         function logout() {
             sessionStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('userId');
+            sessionStorage.removeItem('userName');
             window.location.href = 'sutra-login.html';
         }
 
         document.addEventListener("DOMContentLoaded", function() {
+            // Set welcome message
+            const userName = sessionStorage.getItem('userName');
+            const userId = sessionStorage.getItem('userId');
+            if (userName && userId) {
+                const welcomeElement = document.createElement('div');
+                welcomeElement.id = 'welcome-message';
+                welcomeElement.style.textAlign = 'center';
+                welcomeElement.style.marginBottom = '20px';
+                welcomeElement.style.fontWeight = 'bold';
+                welcomeElement.innerText = `Welcome ${userName}`;
+                document.getElementById('welcome-message').replaceWith(welcomeElement);
+                document.getElementById('user-id').value = userId; // Set user-id for form submission
+            }
+
+            // Fetch names and mobile numbers from CSV
             async function fetchNames() {
                 try {
                     const response = await fetch('sutra-login-html.csv', { redirect: 'follow' });
@@ -364,6 +382,7 @@
                 handleIdInput(id, "alp-name", "alp-name-hidden", "alp-mobile-hidden");
             });
 
+            // Date and time picker setup
             const today = new Date();
             const yesterday = new Date(today);
             yesterday.setDate(today.getDate() - 1);
@@ -410,42 +429,10 @@
                 signOnTimePicker.set("maxTime", `${currentHours}:${currentMinutes}`);
             }
 
-            const userName = sessionStorage.getItem('userName');
-            if (userName) {
-                const welcomeElement = document.createElement('div');
-                welcomeElement.id = 'welcome-message';
-                welcomeElement.style.textAlign = 'center';
-                welcomeElement.style.marginBottom = '20px';
-                welcomeElement.style.fontWeight = 'bold';
-                welcomeElement.innerText = `Welcome ${userName}`;
-                const formContainer = document.querySelector('.form-container');
-                const sutraFormHeading = formContainer.querySelector('h2');
-                sutraFormHeading.insertAdjacentElement('afterend', welcomeElement);
-            }
-
-            function convertFormDataToUpperCase(formData) {
-                const newFormData = new FormData();
-                formData.forEach((value, key) => {
-                    newFormData.append(key, value.toUpperCase());
-                });
-                return newFormData;
-            }
-
-            function parseDateTime(dateStr, timeStr) {
-                if (timeStr.includes('/')) {
-                    timeStr = timeStr.split(' ')[1] || timeStr;
-                }
-                if (timeStr.length === 5) {
-                    timeStr += ":00";
-                }
-                const [day, month, year] = dateStr.split('-').reverse();
-                const [hours, minutes, seconds] = timeStr.split(':');
-                return new Date(year, month - 1, day, hours, minutes, seconds);
-            }
-
+            // Form submission
             document.getElementById("sutra-form").addEventListener("submit", function(e) {
                 e.preventDefault();
-            
+
                 const signOnDate = document.getElementById("sign-on-date").value;
                 const signOnTimeInput = document.getElementById("sign-on-time").value;
 
@@ -460,33 +447,32 @@
                 const alpName = document.getElementById("alp-name-hidden").value;
                 console.log("LP Name:", lpName);
                 console.log("ALP Name:", alpName);
-            
+
                 const formattedSignOnDateTime = formatDateTime(signOnDate, signOnTimeInput);
                 console.log("Formatted Sign-On DateTime:", formattedSignOnDateTime);
                 
                 document.getElementById("sign-on-time").value = formattedSignOnDateTime;
-            
+
                 const currentTimestamp = formatTimestamp(new Date());
                 document.getElementById("timestamp").value = currentTimestamp;
-            
+
                 const formData = new FormData(e.target);
                 const uppercaseFormData = convertFormDataToUpperCase(formData);
-            
+
                 const submitButton = e.target.querySelector('button[type="submit"]');
                 const spinnerContainer = document.getElementById("spinner-container");
-            
+
                 spinnerContainer.style.display = "block";
-            
                 submitButton.disabled = true;
-            
-                fetch('https://script.google.com/macros/s/AKfycbzj6q4tr9DtNqpFIAZGIKPXTHkV1FC5X-dVOXPS7aW-XoeDuuymjylBJpDVVIKnfo8U5g/exec', {
+
+                fetch('https://script.google.com/macros/s/AKfycbw7Yk09ptBSAP8e5VohbSBPxr8MUwFuBxGPGiz8eySRDLcuLZw4ipa5AnU1WJ4-Shqoqw/exec', {
                     method: 'POST',
                     body: uppercaseFormData
                 })
                 .then(response => response.json())
                 .then(data => {
                     spinnerContainer.style.display = "none";
-            
+
                     if (data.result === 'success') {
                         if (confirm('Form submitted successfully! Click OK to go to the homepage.')) {
                             window.location.href = 'index.html';
@@ -503,7 +489,27 @@
                     console.error("Error:", error);
                 });
             });
-            
+
+            function convertFormDataToUpperCase(formData) {
+                const newFormData = new FormData();
+                formData.forEach((value, key) => {
+                    newFormData.append(key, value.toUpperCase());
+                });
+                return newFormData;
+            }
+
+            function parseDateTime(dateStr, timeStr) {
+                if (timeStr.includes('/')) {
+                    timeStr = timeStr.split(' ')[1] || timeStr;
+                }
+                if (timeStr.length === 5) {
+                    timeStr += ":00";
+                }
+                const [year, month, day] = dateStr.split('-');
+                const [hours, minutes, seconds] = timeStr.split(':');
+                return new Date(year, month - 1, day, hours, minutes, seconds);
+            }
+
             function formatDateTime(date, time) {
                 if (time.includes('/')) {
                     const timeParts = time.split(' ')[1] || time;
@@ -517,7 +523,7 @@
                 const [year, month, day] = date.split("-");
                 return `${day}/${month}/${year} ${time}`;
             }
-            
+
             function formatTimestamp(date) {
                 const day = String(date.getDate()).padStart(2, '0');
                 const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -525,18 +531,10 @@
                 const hours = String(date.getHours()).padStart(2, '0');
                 const minutes = String(date.getMinutes()).padStart(2, '0');
                 const seconds = String(date.getSeconds()).padStart(2, '0');
-            
                 return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
             }
-            
-            document.querySelector('.logout-button').addEventListener('click', function() {
-                sessionStorage.removeItem('isLoggedIn');
-                sessionStorage.removeItem('userId');
-                sessionStorage.removeItem('userName');
-                window.location.href = 'sutra-login.html';
-            });
 
-            // Add event listener for direction change
+            // Auto-set ml-cic for OTHER DIVISION
             document.getElementById("direction").addEventListener("change", function() {
                 if (this.value === "OTHER DIVISION") {
                     document.getElementById("ml-cic").value = "TLC-OTHER-DIV";
