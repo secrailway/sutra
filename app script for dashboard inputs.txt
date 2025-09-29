@@ -1,5 +1,5 @@
-const sheetId = '1Eob3yiujIi0sNtsPQr_HCvQtlybXnq6K11bm1wAcqAo'; // Replace with your actual Spreadsheet ID
-const sheetName = 'input'; // Use the correct sheet name
+const sheetId = '1Eob3yiujIi0sNtsPQr_HCvQtlybXnq6K11bm1wAcqAo'; // Your Spreadsheet ID
+const sheetName = 'input'; // Your sheet name
 
 function doPost(e) {
   const lock = LockService.getScriptLock();
@@ -9,23 +9,36 @@ function doPost(e) {
     const doc = SpreadsheetApp.openById(sheetId);
     const sheet = doc.getSheetByName(sheetName);
 
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    // Define expected headers
+    const headers = [
+      'LP ID', 'LP Name', 'LP Mobile', 'ALP ID', 'ALP Name', 'ALP Mobile', 
+      'Train No', 'LOCO No', 'Sign On Date', 'Sign On Time', 'Direction', 
+      'Last Passed Station', 'ML/CIC', 'Submitted By', 'TimeStamp'
+    ];
+
+    // Set headers if the first row is blank
+    if (sheet.getRange(1, 1).isBlank()) {
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    }
+
+    // Get current headers to map dynamically
+    const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     const nextRow = sheet.getLastRow() + 1;
 
-    const newRow = headers.map(function(header) {
+    const newRow = currentHeaders.map(function(header) {
       switch(header) {
         case 'LP ID':
           return e.parameter['lp-id'] || '';
         case 'LP Name':
           return e.parameter['lp-name-hidden'] || '';
         case 'LP Mobile':
-          return e.parameter['lp-mobile-hidden'] || ''; // Add LP Mobile
+          return e.parameter['lp-mobile-hidden'] || '';
         case 'ALP ID':
           return e.parameter['alp-id'] || '';
         case 'ALP Name':
           return e.parameter['alp-name-hidden'] || '';
         case 'ALP Mobile':
-          return e.parameter['alp-mobile-hidden'] || ''; // Add ALP Mobile
+          return e.parameter['alp-mobile-hidden'] || '';
         case 'Train No':
           return e.parameter['train-no'] || '';
         case 'LOCO No':
@@ -40,8 +53,10 @@ function doPost(e) {
           return e.parameter['last-passed-station'] || '';
         case 'ML/CIC':
           return e.parameter['ml-cic'] || '';
-        case 'TimeStamp': // New case for Timestamp
-          return e.parameter['timestamp'] || '';
+        case 'Submitted By':
+          return e.parameter['user-id'] || '';
+        case 'TimeStamp':
+          return e.parameter['timestamp'] || formatTimestamp(new Date()); // Use client-side timestamp if provided
         default:
           return ''; // Default empty for unhandled headers
       }
@@ -61,3 +76,12 @@ function doPost(e) {
   }
 }
 
+function formatTimestamp(date) {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+}
